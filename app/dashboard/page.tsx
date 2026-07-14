@@ -2,12 +2,12 @@ import Link from "next/link";
 import { PhotoUpload } from "@/components/PhotoUpload";
 import { SimpleBadge } from "@/components/ui";
 import { Reveal } from "@/components/motion";
-import { materials, supplierById, PROJECT } from "@/lib/data";
+import { getMaterials, getOrgInfo } from "@/lib/queries";
 import { formatDate } from "@/lib/utils";
 import {
   simpleOf,
   latenessText,
-  madeStatus,
+  madeStatusText,
   whatToDo,
   buildingDelayText,
 } from "@/lib/plain";
@@ -23,19 +23,18 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-export default function TodayPage() {
-  const sorted = [...materials].sort(
+export default async function TodayPage() {
+  const [items, org] = await Promise.all([getMaterials(), getOrgInfo()]);
+  const sorted = [...items].sort(
     (a, b) =>
-      b.criticalPathSlipDays * b.costOfDelayPerDay -
-      a.criticalPathSlipDays * a.costOfDelayPerDay
+      b.buildingDelayDays * b.costOfDelayPerDay - a.buildingDelayDays * a.costOfDelayPerDay
   );
   const late = sorted.filter((m) => simpleOf(m) === "late");
   const risky = sorted.filter((m) => simpleOf(m) === "risky");
   const good = sorted.filter((m) => simpleOf(m) === "good");
   const topFix = late[0] ?? risky[0];
-  const fixSupplier = topFix ? supplierById(topFix.supplierId) : null;
 
-  const hour = new Date(PROJECT.today).getHours();
+  const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
@@ -43,7 +42,7 @@ export default function TodayPage() {
       {/* Greeting */}
       <div>
         <p className="text-sm font-medium text-slate-400">
-          {new Date(PROJECT.today).toLocaleDateString("en-US", {
+          {new Date().toLocaleDateString("en-US", {
             weekday: "long",
             month: "long",
             day: "numeric",
@@ -53,7 +52,7 @@ export default function TodayPage() {
           {greeting} 👷
         </h1>
         <p className="mt-1 text-base text-slate-500">
-          Here is how your materials look today at {PROJECT.name}.
+          Here is how your materials look today at {org.projectName}.
         </p>
       </div>
 
@@ -92,7 +91,7 @@ export default function TodayPage() {
       </div>
 
       {/* Fix this first */}
-      {topFix && fixSupplier && (
+      {topFix && (
         <Reveal delay={0.05}>
           <div className="card overflow-hidden">
             <div className="flex items-center gap-2 border-b border-hairline bg-danger-50/60 px-6 py-3">
@@ -108,8 +107,13 @@ export default function TodayPage() {
               </div>
               <h2 className="mt-3 text-xl font-semibold text-slate-900">{topFix.name}</h2>
               <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-600">
-                It is <b>{madeStatus[topFix.status].toLowerCase()}</b>, and you need it by{" "}
-                <b>{formatDate(topFix.neededBy)}</b>. {buildingDelayText(topFix)}.
+                It is <b>{madeStatusText(topFix.status).toLowerCase()}</b>
+                {topFix.needBy ? (
+                  <>
+                    , and you need it by <b>{formatDate(topFix.needBy)}</b>
+                  </>
+                ) : null}
+                . {buildingDelayText(topFix)}.
               </p>
 
               <div className="mt-4 flex items-start gap-3 rounded-2xl border border-primary-200 bg-primary-50/60 p-4">
@@ -119,7 +123,7 @@ export default function TodayPage() {
                 <div>
                   <p className="text-sm font-bold text-primary-800">What to do</p>
                   <p className="text-sm text-slate-700">
-                    {whatToDo(topFix, fixSupplier.name) ?? "Keep watching this order."}
+                    {whatToDo(topFix, topFix.supplier?.name ?? null) ?? "Keep watching this order."}
                   </p>
                 </div>
               </div>
@@ -145,7 +149,7 @@ export default function TodayPage() {
             <div>
               <p className="text-base font-semibold text-slate-900">Good weather for work</p>
               <p className="text-sm text-slate-500">
-                {PROJECT.location} · Sunny, 94°F. No rain expected today.
+                {org.projectLocation || "Your site"} · Sunny, 94°F. No rain expected today.
               </p>
             </div>
           </div>

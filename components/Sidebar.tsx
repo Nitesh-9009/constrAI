@@ -6,7 +6,7 @@ import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import { Logo } from "./ui";
 import { navItems } from "./nav";
 import { cn } from "@/lib/utils";
-import { PROJECT } from "@/lib/data";
+import type { OrgInfo } from "@/lib/materials";
 
 export function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -50,7 +50,7 @@ export function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function ProjectCard() {
+export function ProjectCard({ org }: { org: OrgInfo }) {
   return (
     <div className="mx-4 mb-4 rounded-2xl border border-hairline bg-gradient-to-br from-primary-50 to-white p-3.5 shadow-soft">
       <div className="flex items-center gap-2">
@@ -59,8 +59,8 @@ export function ProjectCard() {
         </span>
         <p className="label-muted text-primary-700/70">Your site</p>
       </div>
-      <p className="mt-2 text-sm font-semibold text-slate-900">{PROJECT.name}</p>
-      <p className="text-xs text-slate-500">{PROJECT.location}</p>
+      <p className="mt-2 text-sm font-semibold text-slate-900">{org.projectName}</p>
+      <p className="text-xs text-slate-500">{org.projectLocation || org.companyName}</p>
     </div>
   );
 }
@@ -87,7 +87,7 @@ export function SidebarFooter({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ org }: { org: OrgInfo }) {
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-hairline bg-white/80 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:overflow-y-auto">
       <div className="px-5 py-5">
@@ -95,7 +95,7 @@ export function Sidebar() {
           <Logo />
         </Link>
       </div>
-      <ProjectCard />
+      <ProjectCard org={org} />
       <NavList />
       <SidebarFooter />
     </aside>

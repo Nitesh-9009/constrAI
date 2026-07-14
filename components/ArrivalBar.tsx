@@ -1,5 +1,5 @@
-import { Material } from "@/lib/types";
 import { simpleOf } from "@/lib/plain";
+import type { MaterialVM } from "@/lib/materials";
 import { formatDate, daysBetween } from "@/lib/utils";
 import { Truck, Flag } from "lucide-react";
 
@@ -8,10 +8,20 @@ import { Truck, Flag } from "lucide-react";
  * markers — when you NEED it, and when it will ARRIVE. Green if it lands in
  * time, red if it lands late. No statistics, no jargon.
  */
-export function ArrivalBar({ material }: { material: Material }) {
+export function ArrivalBar({ material }: { material: MaterialVM }) {
   const tone = simpleOf(material);
-  const need = new Date(material.neededBy).getTime();
-  const arrive = new Date(material.eta.p50).getTime();
+
+  if (!material.needBy || !material.expectedArrival) {
+    return (
+      <div className="rounded-2xl border border-hairline bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+        Dates for this order aren&apos;t set yet. Add a &ldquo;need by&rdquo; and &ldquo;expected
+        arrival&rdquo; date to see the timeline.
+      </div>
+    );
+  }
+
+  const need = new Date(material.needBy).getTime();
+  const arrive = new Date(material.expectedArrival).getTime();
 
   const min = Math.min(need, arrive);
   const max = Math.max(need, arrive);
@@ -42,7 +52,7 @@ export function ArrivalBar({ material }: { material: Material }) {
           color="text-slate-700"
           dot="bg-slate-700"
           topLabel="You need it"
-          bottomLabel={formatDate(material.neededBy)}
+          bottomLabel={formatDate(material.needBy)}
           icon={<Flag className="h-3.5 w-3.5" />}
         />
 
@@ -52,7 +62,7 @@ export function ArrivalBar({ material }: { material: Material }) {
           color={late ? "text-danger-600" : "text-success-600"}
           dot={late ? "bg-danger-500" : "bg-success-500"}
           topLabel="Will arrive"
-          bottomLabel={formatDate(material.eta.p50)}
+          bottomLabel={formatDate(material.expectedArrival)}
           icon={<Truck className="h-3.5 w-3.5" />}
           below
         />
@@ -64,7 +74,7 @@ export function ArrivalBar({ material }: { material: Material }) {
         }`}
       >
         {late
-          ? `This will arrive after you need it — ${daysBetween(material.neededBy, material.eta.p50)} day(s) late.`
+          ? `This will arrive after you need it — ${daysBetween(material.needBy, material.expectedArrival)} day(s) late.`
           : "This should arrive in time for the crew."}
       </p>
     </div>

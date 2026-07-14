@@ -107,6 +107,7 @@ export type Database = {
           on_time_probability: number;
           cost_of_delay_per_day: number;
           building_delay_days: number;
+          paperwork: string;
           location: string | null;
           notes: string | null;
           created_at: string;
@@ -125,6 +126,7 @@ export type Database = {
           on_time_probability?: number;
           cost_of_delay_per_day?: number;
           building_delay_days?: number;
+          paperwork?: string;
           location?: string | null;
           notes?: string | null;
           created_at?: string;
@@ -143,6 +145,7 @@ export type Database = {
           on_time_probability?: number;
           cost_of_delay_per_day?: number;
           building_delay_days?: number;
+          paperwork?: string;
           location?: string | null;
           notes?: string | null;
           created_at?: string;

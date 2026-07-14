@@ -1,18 +1,21 @@
 import Link from "next/link";
 import { Reveal } from "@/components/motion";
 import { SimpleBadge } from "@/components/ui";
-import { materials, supplierById } from "@/lib/data";
+import { getMaterials } from "@/lib/queries";
 import { formatDate, cn } from "@/lib/utils";
-import { simpleOf, madeStatus, latenessText } from "@/lib/plain";
+import { simpleOf, madeStatusText, latenessText } from "@/lib/plain";
 import { Truck, MapPin, ChevronRight } from "lucide-react";
 
 export const metadata = { title: "Deliveries" };
 
-export default function DeliveriesPage() {
-  // soonest arrival first
-  const inbound = [...materials].sort(
-    (a, b) => new Date(a.eta.p50).getTime() - new Date(b.eta.p50).getTime()
-  );
+export default async function DeliveriesPage() {
+  const all = await getMaterials();
+  // soonest arrival first (undated go last)
+  const inbound = [...all].sort((a, b) => {
+    const ta = a.expectedArrival ? new Date(a.expectedArrival).getTime() : Infinity;
+    const tb = b.expectedArrival ? new Date(b.expectedArrival).getTime() : Infinity;
+    return ta - tb;
+  });
 
   return (
     <div className="container-luxe max-w-5xl space-y-6 py-6">
@@ -28,10 +31,15 @@ export default function DeliveriesPage() {
         </div>
       </div>
 
+      {inbound.length === 0 && (
+        <div className="card p-10 text-center text-sm text-slate-500">
+          No deliveries yet. Add a material to start tracking its delivery.
+        </div>
+      )}
+
       <div className="space-y-3">
         {inbound.map((m, i) => {
           const tone = simpleOf(m);
-          const sup = supplierById(m.supplierId);
           return (
             <Reveal key={m.id} delay={i * 0.05}>
               <Link
@@ -46,15 +54,19 @@ export default function DeliveriesPage() {
                     {m.name}
                   </h3>
                   <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
-                    <span className="font-medium text-slate-600">{madeStatus[m.status]}</span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5" /> Coming from {sup.location}
-                    </span>
+                    <span className="font-medium text-slate-600">{madeStatusText(m.status)}</span>
+                    {m.supplier?.location && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5" /> Coming from {m.supplier.location}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="hidden shrink-0 text-right sm:block">
                   <p className="text-xs text-slate-400">Arrives</p>
-                  <p className="text-base font-semibold text-slate-900">{formatDate(m.eta.p50)}</p>
+                  <p className="text-base font-semibold text-slate-900">
+                    {m.expectedArrival ? formatDate(m.expectedArrival) : "—"}
+                  </p>
                   <p
                     className={cn(
                       "text-xs font-semibold",
@@ -73,7 +85,7 @@ export default function DeliveriesPage() {
               <div className="mt-2 flex items-center justify-between px-1 sm:hidden">
                 <SimpleBadge tone={tone} size="sm" />
                 <span className="text-sm font-medium text-slate-600">
-                  Arrives {formatDate(m.eta.p50)}
+                  {m.expectedArrival ? `Arrives ${formatDate(m.expectedArrival)}` : "No date"}
                 </span>
               </div>
             </Reveal>

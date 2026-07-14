@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { answerLocally } from "@/lib/assistant";
+import { getMaterials } from "@/lib/queries";
 
 export const runtime = "nodejs";
 
@@ -16,9 +17,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Empty question" }, { status: 400 });
   }
 
-  // Deterministic, plain-language engine. Always works with no API key, gives
-  // fast, consistent answers whose text always matches the linked materials
-  // and actions. This is what real customers rely on.
-  const answer = answerLocally(question);
+  // Deterministic, plain-language engine over the user's own materials.
+  // Fast, consistent, works with no external AI key.
+  const materials = await getMaterials();
+  const answer = answerLocally(question, materials);
   return NextResponse.json({ ...answer, mode: "answer" });
 }

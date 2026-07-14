@@ -4,9 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ChevronRight, MapPin } from "lucide-react";
-import { materials, supplierById } from "@/lib/data";
 import { cn, formatDate } from "@/lib/utils";
-import { simpleOf, latenessText, madeStatus, type Simple } from "@/lib/plain";
+import { simpleOf, latenessText, madeStatusText, type Simple } from "@/lib/plain";
+import type { MaterialVM } from "@/lib/materials";
 import { SimpleBadge } from "./ui";
 
 type Filter = "all" | "late" | "good";
@@ -17,15 +17,20 @@ const filters: { key: Filter; label: string }[] = [
   { key: "good", label: "On time" },
 ];
 
-export function MaterialList({ showFilters = true }: { showFilters?: boolean }) {
+export function MaterialList({
+  items,
+  showFilters = true,
+}: {
+  items: MaterialVM[];
+  showFilters?: boolean;
+}) {
   const [filter, setFilter] = useState<Filter>("all");
   const reduce = useReducedMotion();
 
   // worst first
-  const sorted = [...materials].sort(
+  const sorted = [...items].sort(
     (a, b) =>
-      b.criticalPathSlipDays * b.costOfDelayPerDay -
-      a.criticalPathSlipDays * a.costOfDelayPerDay
+      b.buildingDelayDays * b.costOfDelayPerDay - a.buildingDelayDays * a.costOfDelayPerDay
   );
 
   const list = sorted.filter((m) => {
@@ -65,7 +70,6 @@ export function MaterialList({ showFilters = true }: { showFilters?: boolean }) 
         )}
         {list.map((m, i) => {
           const tone = simpleOf(m);
-          const sup = supplierById(m.supplierId);
           return (
             <motion.div
               key={m.id}
@@ -84,13 +88,17 @@ export function MaterialList({ showFilters = true }: { showFilters?: boolean }) 
                     {m.name}
                   </h3>
                   <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
-                    <span className="font-medium text-slate-600">{madeStatus[m.status]}</span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5" /> {m.location}
-                    </span>
-                    <span>You need it by {formatDate(m.neededBy)}</span>
+                    <span className="font-medium text-slate-600">{madeStatusText(m.status)}</span>
+                    {m.location && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5" /> {m.location}
+                      </span>
+                    )}
+                    <span>{m.needBy ? `You need it by ${formatDate(m.needBy)}` : "No date set"}</span>
                   </div>
-                  <p className="mt-1 text-xs text-slate-400">Made by {sup.name}</p>
+                  {m.supplier && (
+                    <p className="mt-1 text-xs text-slate-400">Made by {m.supplier.name}</p>
+                  )}
                 </div>
 
                 <div className="hidden shrink-0 flex-col items-end gap-1.5 sm:flex">

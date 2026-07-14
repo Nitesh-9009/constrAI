@@ -1,16 +1,18 @@
-import { Material } from "./types";
+import type { MaterialVM } from "./materials";
 import { daysBetween } from "./utils";
 
 /** Simple 3-state used everywhere in the plain-language UI. */
 export type Simple = "late" | "risky" | "good";
 
-/** Map the internal risk to a friendly 3-state — kept consistent with the dates the user sees. */
-export function simpleOf(m: Material): Simple {
-  const d = daysBetween(m.neededBy, m.eta.p50); // >0 = arrives after it's needed
-  if (d > 0) return "late"; // will arrive after you need it
-  if (d === 0) return "risky"; // arrives exactly on the day — cutting it close
-  if (m.onTimeProbability < 0.6) return "risky"; // early on paper, but supplier is unreliable
-  return "good"; // comfortably before you need it
+/** Map a material to a friendly 3-state — kept consistent with the dates shown. */
+export function simpleOf(m: MaterialVM): Simple {
+  if (m.needBy && m.expectedArrival) {
+    const d = daysBetween(m.needBy, m.expectedArrival); // >0 = arrives after needed
+    if (d > 0) return "late";
+    if (d === 0) return "risky";
+  }
+  if (m.onTimeProbability < 0.6) return "risky";
+  return "good";
 }
 
 export const simpleWord: Record<Simple, string> = {
@@ -25,13 +27,15 @@ export const simpleHint: Record<Simple, string> = {
   good: "Nothing to do",
 };
 
-/** How many days late (negative = early). Uses the expected arrival date. */
-export function daysLate(m: Material): number {
-  return daysBetween(m.neededBy, m.eta.p50);
+/** How many days late (negative = early). 0 if dates aren't set. */
+export function daysLate(m: MaterialVM): number {
+  if (!m.needBy || !m.expectedArrival) return 0;
+  return daysBetween(m.needBy, m.expectedArrival);
 }
 
-/** "3 days late" / "2 days early" / "Just in time". */
-export function latenessText(m: Material): string {
+/** "3 days late" / "2 days early" / "Just in time" / "No date yet". */
+export function latenessText(m: MaterialVM): string {
+  if (!m.needBy || !m.expectedArrival) return "No date set yet";
   const d = daysLate(m);
   if (d > 0) return `${d} day${d > 1 ? "s" : ""} late`;
   if (d < 0) return `${-d} day${-d > 1 ? "s" : ""} early`;
@@ -48,10 +52,14 @@ export const madeStatus: Record<string, string> = {
   delivered: "Arrived",
 };
 
+export function madeStatusText(status: string): string {
+  return madeStatus[status] ?? status.replace(/_/g, " ");
+}
+
 /** Chance of arriving on time, in words. */
-export function chanceText(m: Material): string {
-  if (m.onTimeProbability >= 0.8) return "Very likely to arrive on time";
-  if (m.onTimeProbability >= 0.5) return "Might arrive late";
+export function chanceText(prob: number): string {
+  if (prob >= 0.8) return "Very likely to arrive on time";
+  if (prob >= 0.5) return "Might arrive late";
   return "Very likely to arrive late";
 }
 
@@ -75,26 +83,20 @@ export const paperStatus: Record<string, { label: string; tone: Simple }> = {
   revise_resubmit: { label: "Papers not approved — work is stuck", tone: "late" },
 };
 
-/** Money lost for each day this order is late (rounded, friendly). */
-export function moneyPerDay(m: Material): number {
-  return m.costOfDelayPerDay;
-}
-
 /** How much the whole building could be delayed, in words. */
-export function buildingDelayText(m: Material): string {
-  const d = m.criticalPathSlipDays;
+export function buildingDelayText(m: MaterialVM): string {
+  const d = m.buildingDelayDays;
   if (d <= 0) return "Won't delay the building";
   return `Could delay the building by ${d} day${d > 1 ? "s" : ""}`;
 }
 
 /** One clear thing to do about this order, in plain words. */
-export function whatToDo(m: Material, supplierName: string): string | null {
-  if (m.submittalStatus === "revise_resubmit")
-    return `Get the papers approved so ${supplierName} can finish making it.`;
-  if (m.onTimeProbability < 0.6)
-    return `Call ${supplierName} and ask them to hurry up your order.`;
-  if (m.criticalPathSlipDays >= 1)
-    return `Plan other work first so the crew isn't left waiting.`;
+export function whatToDo(m: MaterialVM, supplierName: string | null): string | null {
+  const who = supplierName ?? "the supplier";
+  if (m.paperwork === "revise_resubmit")
+    return `Get the papers approved so ${who} can finish making it.`;
+  if (m.onTimeProbability < 0.6) return `Call ${who} and ask them to hurry up your order.`;
+  if (m.buildingDelayDays >= 1) return `Plan other work first so the crew isn't left waiting.`;
   if (m.status === "in_transit") return `Get the crew and crane ready to unload it.`;
   return null;
 }

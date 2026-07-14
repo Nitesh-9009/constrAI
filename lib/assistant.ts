@@ -1,21 +1,13 @@
-import {
-  materials,
-  cascadeFor,
-  supplierById,
-  taskById,
-  portfolioStats,
-  PROJECT,
-} from "./data";
-import { Material } from "./types";
 import { currency, formatDate } from "./utils";
 import {
   simpleOf,
   simpleWord,
   latenessText,
-  madeStatus,
+  madeStatusText,
   buildingDelayText,
   supplierText,
 } from "./plain";
+import type { MaterialVM } from "./materials";
 
 export interface AssistantAction {
   id: string;
@@ -31,18 +23,19 @@ export interface AssistantAnswer {
   confidence: number;
 }
 
-function describeMaterial(m: Material): string {
-  const sup = supplierById(m.supplierId);
+function describeMaterial(m: MaterialVM): string {
   const tone = simpleOf(m);
-  const perDay = m.costOfDelayPerDay;
+  const who = m.supplier?.name ?? "the supplier";
   return [
-    `**${m.name}** — ${madeStatus[m.status].toLowerCase()} by ${sup.name}.`,
-    `It should arrive **${formatDate(m.eta.p50)}**, and you need it by **${formatDate(
-      m.neededBy
-    )}** (${latenessText(m)}).`,
+    `**${m.name}** — ${madeStatusText(m.status).toLowerCase()} by ${who}.`,
+    m.needBy && m.expectedArrival
+      ? `It should arrive **${formatDate(m.expectedArrival)}**, and you need it by **${formatDate(
+          m.needBy
+        )}** (${latenessText(m)}).`
+      : `The dates for this one are not set yet.`,
     tone === "late"
       ? `This is **running late**. Every day it is late costs about **${currency(
-          perDay
+          m.costOfDelayPerDay
         )}**, and it ${buildingDelayText(m).toLowerCase()}.`
       : tone === "risky"
       ? `This **might be late** — keep an eye on it.`
@@ -50,27 +43,26 @@ function describeMaterial(m: Material): string {
   ].join(" ");
 }
 
-function actionsFor(m: Material): AssistantAction[] {
+function actionsFor(m: MaterialVM): AssistantAction[] {
   const acts: AssistantAction[] = [];
-  const sup = supplierById(m.supplierId);
+  const who = m.supplier?.name ?? "the supplier";
   if (m.onTimeProbability < 0.6) {
     acts.push({
       id: `escalate-${m.id}`,
-      label: `Call ${sup.name}`,
+      label: `Call ${who}`,
       kind: "escalate",
       detail: `Ask them to hurry up your order and give you a firm delivery date.`,
     });
   }
-  if (m.criticalPathSlipDays >= 1) {
-    const task = taskById(m.linkedTaskId);
+  if (m.buildingDelayDays >= 1) {
     acts.push({
       id: `reseq-${m.id}`,
       label: `Plan other work first`,
       kind: "resequence",
-      detail: `Move "${task.name}" a little later so the crew is not left standing around waiting.`,
+      detail: `Do other work first so the crew is not left standing around waiting.`,
     });
   }
-  if (m.submittalStatus === "revise_resubmit") {
+  if (m.paperwork === "revise_resubmit") {
     acts.push({
       id: `flag-${m.id}`,
       label: `Get the papers approved`,
@@ -82,27 +74,33 @@ function actionsFor(m: Material): AssistantAction[] {
 }
 
 /**
- * Deterministic, domain-grounded responder. Always works with no API key so the
- * demo is reliable. If an LLM key is configured, the API route uses it instead.
+ * Deterministic, plain-language responder. Works entirely on the caller's
+ * materials — no API key, always consistent.
  */
-export function answerLocally(question: string): AssistantAnswer {
+export function answerLocally(question: string, materials: MaterialVM[]): AssistantAnswer {
   const q = question.toLowerCase();
-  const stats = portfolioStats();
+
+  if (materials.length === 0) {
+    return {
+      answer:
+        "You don't have any materials yet. Add your first order and I'll help you keep track of it.",
+      materialIds: [],
+      actions: [],
+      confidence: 0.6,
+    };
+  }
 
   const ranked = [...materials].sort(
-    (a, b) =>
-      b.criticalPathSlipDays * b.costOfDelayPerDay -
-      a.criticalPathSlipDays * a.costOfDelayPerDay
+    (a, b) => b.buildingDelayDays * b.costOfDelayPerDay - a.buildingDelayDays * a.costOfDelayPerDay
   );
+  const attention = ranked.filter((m) => simpleOf(m) !== "good");
   const topRisk = ranked[0];
 
   // What's late / needs attention / what should I do
   if (
     q.includes("block") ||
-    q.includes("pour") ||
-    q.includes("critical") ||
-    q.includes("risk") ||
     q.includes("late") ||
+    q.includes("risk") ||
     q.includes("problem") ||
     q.includes("wrong") ||
     q.includes("attention") ||
@@ -112,23 +110,11 @@ export function answerLocally(question: string): AssistantAnswer {
     q.includes("fix") ||
     q.includes("help")
   ) {
-    // If the question names the pour / level 3, focus on what gates it.
-    let focus = topRisk;
-    if (q.includes("pour") || q.includes("level 3") || q.includes("l3") || q.includes("slab")) {
-      const gating = materials
-        .filter((m) => m.linkedTaskId === "t-l3-pour")
-        .sort((a, b) => a.onTimeProbability - b.onTimeProbability)[0];
-      if (gating) focus = gating;
-    }
-    const cascade = cascadeFor(focus.id);
-    const cascadeText = cascade
-      .map((c) => `${c.task.name} (${c.slipDays} day${c.slipDays > 1 ? "s" : ""} later)`)
-      .join(", ");
+    const focus = attention[0] ?? topRisk;
     return {
       answer: [
         `The most important one to fix is: ${describeMaterial(focus)}`,
-        cascade.length ? `\n\nIf it stays late, it also holds up: ${cascadeText}.` : "",
-        `\n\nRight now **${stats.atRisk} of ${stats.total}** of your materials need attention.`,
+        `\n\nRight now **${attention.length} of ${materials.length}** of your materials need attention.`,
       ].join(""),
       materialIds: [focus.id],
       actions: actionsFor(focus),
@@ -136,21 +122,18 @@ export function answerLocally(question: string): AssistantAnswer {
     };
   }
 
-  // Named material lookups (with simple synonyms)
-  const synonyms: Record<string, string[]> = {
-    "mat-rebar-l3": ["steel", "rebar", "bar", "reinforc"],
-    "mat-concrete-l3": ["concrete", "cement", "pour", "mix"],
-    "mat-precast-south": ["precast", "panel"],
-    "mat-ahu-l4": ["ac", "air", "hvac", "cooling", "handling"],
-    "mat-switchgear": ["electric", "switch", "power"],
-    "mat-curtain-east": ["glass", "curtain", "window", "facade"],
-  };
-  const named = materials.find(
-    (m) =>
-      q.includes(m.poNumber.toLowerCase()) ||
-      m.name.toLowerCase().split(" ").some((w) => w.length > 3 && q.includes(w)) ||
-      (synonyms[m.id] ?? []).some((w) => q.includes(w))
-  );
+  // Named material lookup (by words in the name + a few common synonyms)
+  const named = materials.find((m) => {
+    const name = m.name.toLowerCase();
+    return (
+      name.split(/\s+/).some((w) => w.length > 3 && q.includes(w)) ||
+      (q.includes("steel") && (name.includes("rebar") || name.includes("steel"))) ||
+      (q.includes("concrete") && name.includes("concrete")) ||
+      (q.includes("glass") && name.includes("curtain")) ||
+      (q.includes("ac") && name.includes("air")) ||
+      (q.includes("electric") && name.includes("switch"))
+    );
+  });
   if (named) {
     return {
       answer: describeMaterial(named),
@@ -174,9 +157,11 @@ export function answerLocally(question: string): AssistantAnswer {
   ) {
     const safe = materials.filter((m) => simpleOf(m) === "good");
     return {
-      answer: `**${safe.length}** of your materials are on time: ${safe
-        .map((m) => m.name)
-        .join(", ")}. Nothing to do for these — we keep watching them for you.`,
+      answer: safe.length
+        ? `**${safe.length}** of your materials are on time: ${safe
+            .map((m) => m.name)
+            .join(", ")}. Nothing to do for these — we keep watching them for you.`
+        : "None are fully on time right now. Check the ones that need attention.",
       materialIds: safe.map((m) => m.id),
       actions: [],
       confidence: 0.75,
@@ -190,13 +175,21 @@ export function answerLocally(question: string): AssistantAnswer {
     q.includes("company") ||
     q.includes("who")
   ) {
-    const worst = [...materials].sort(
-      (a, b) => supplierById(a.supplierId).onTimeRate - supplierById(b.supplierId).onTimeRate
+    const withSup = materials.filter((m) => m.supplier);
+    const worst = [...withSup].sort(
+      (a, b) => (a.supplier?.onTimeRate ?? 1) - (b.supplier?.onTimeRate ?? 1)
     )[0];
-    const sup = supplierById(worst.supplierId);
+    if (!worst || !worst.supplier) {
+      return {
+        answer: "You haven't added any suppliers yet.",
+        materialIds: [],
+        actions: [],
+        confidence: 0.6,
+      };
+    }
     return {
-      answer: `The supplier that is late most often is **${sup.name}** — ${supplierText(
-        sup.onTimeRate
+      answer: `The supplier that is late most often is **${worst.supplier.name}** — ${supplierText(
+        worst.supplier.onTimeRate
       ).toLowerCase()}. They are making **${worst.name}**, which is ${simpleWord[
         simpleOf(worst)
       ].toLowerCase()}. It may help to call them and check on your order.`,
@@ -209,7 +202,7 @@ export function answerLocally(question: string): AssistantAnswer {
   // Default summary
   return {
     answer: [
-      `Here is how things look at ${PROJECT.name}: **${stats.atRisk} of ${stats.total}** materials need attention.`,
+      `Here is how things look: **${attention.length} of ${materials.length}** materials need attention.`,
       `\n\nThe most important one: ${describeMaterial(topRisk)}`,
       `\n\nYou can ask me things like "what is late?", "what should I do today?", or "which supplier is often late?"`,
     ].join(""),
@@ -217,18 +210,4 @@ export function answerLocally(question: string): AssistantAnswer {
     actions: actionsFor(topRisk),
     confidence: 0.7,
   };
-}
-
-export function buildSystemPrompt(): string {
-  const ctx = materials
-    .map((m) => {
-      const sup = supplierById(m.supplierId);
-      return `- ${m.name} | ${m.poNumber} | status ${m.status} ${m.fabricationProgress}% | need ${m.neededBy} | ETA p50 ${m.eta.p50} | on-time ${(m.onTimeProbability * 100).toFixed(0)}% | slip ${m.criticalPathSlipDays}d | $${m.costOfDelayPerDay}/day | supplier ${sup.name} (${(sup.onTimeRate * 100).toFixed(0)}% on-time) | task ${m.linkedTaskId} | ${m.flags?.join("; ") ?? ""}`;
-    })
-    .join("\n");
-  return `You are ConstrAI, a friendly helper for a construction site manager who may not know technical words. The project is "${PROJECT.name}" (${PROJECT.location}). Today is ${PROJECT.today}.
-Answer in very simple, short sentences that anyone can understand. Do NOT use technical words, percentages, probabilities, or jargon like "critical path", "submittal", "forecast", or "lead time". Talk about whether a material is on time or running late, when it will arrive, when it is needed, and one clear thing to do. Use ONLY the information below. Never make up materials, suppliers, or dates.
-
-WHAT YOU KNOW (do not repeat the raw data; explain it simply):
-${ctx}`;
 }

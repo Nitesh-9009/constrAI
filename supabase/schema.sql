@@ -63,10 +63,14 @@ create table if not exists public.materials (
   on_time_probability numeric not null default 0.8,
   cost_of_delay_per_day numeric not null default 0,
   building_delay_days int not null default 0,
+  paperwork text not null default 'approved',
   location text,
   notes text,
   created_at timestamptz not null default now()
 );
+
+-- If the table already existed, make sure newer columns are present.
+alter table public.materials add column if not exists paperwork text not null default 'approved';
 
 create index if not exists materials_org_idx on public.materials(org_id);
 create index if not exists suppliers_org_idx on public.suppliers(org_id);
@@ -173,19 +177,19 @@ begin
 
   insert into public.materials
     (org_id, project_id, supplier_id, name, unit, qty, status, need_by, expected_arrival,
-     on_time_probability, cost_of_delay_per_day, building_delay_days, location, notes)
+     on_time_probability, cost_of_delay_per_day, building_delay_days, paperwork, location, notes)
   values
     (new_org, proj, s_atlas, 'Steel Rebar — Level 3 Slab', 'tons', 18.4, 'fabricating',
-      (now()::date), (now()::date + 3), 0.22, 22000, 4, 'Grid B3–D6, Level 3',
+      (now()::date), (now()::date + 3), 0.22, 22000, 4, 'approved', 'Grid B3–D6, Level 3',
       'Being made. Photo check showed 2 bundles with the wrong tag.'),
     (new_org, proj, s_terra, 'Ready-Mix Concrete — L3 Pour', 'cu yd', 420, 'approved',
-      (now()::date), (now()::date), 0.95, 22000, 0, 'Level 3 slab',
+      (now()::date), (now()::date), 0.95, 22000, 0, 'approved', 'Level 3 slab',
       'Ready on time, but waiting on the steel to arrive first.'),
     (new_org, proj, s_nordic, 'Air Handling Units — L4', 'units', 2, 'in_transit',
-      (now()::date + 17), (now()::date + 14), 0.83, 24500, 0, 'Mechanical Room L4',
+      (now()::date + 17), (now()::date + 14), 0.83, 24500, 0, 'approved', 'Mechanical Room L4',
       'On the way from Dallas.'),
     (new_org, proj, s_vitro, 'Curtainwall Units — East Elevation', 'units', 320, 'fabricating',
-      (now()::date + 19), (now()::date + 27), 0.18, 27000, 6, 'East elevation, L2–L8',
+      (now()::date + 19), (now()::date + 27), 0.18, 27000, 6, 'revise_resubmit', 'East elevation, L2–L8',
       'Paperwork not approved yet, so work is partly stopped.');
 
   return new;

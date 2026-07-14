@@ -11,8 +11,9 @@ import {
   FileWarning,
   PackageCheck,
   CheckCircle2,
+  Pencil,
 } from "lucide-react";
-import { materialById, materials, supplierById } from "@/lib/data";
+import { getMaterial } from "@/lib/queries";
 import { formatDate } from "@/lib/utils";
 import { ArrivalBar } from "@/components/ArrivalBar";
 import { SimpleBadge } from "@/components/ui";
@@ -26,32 +27,21 @@ import {
   whatToDo,
 } from "@/lib/plain";
 
-export function generateStaticParams() {
-  return materials.map((m) => ({ id: m.id }));
-}
-
-const eventTone: Record<string, string> = {
-  info: "bg-slate-400",
-  warn: "bg-warning-500",
-  good: "bg-success-500",
-  action: "bg-primary-500",
-};
-
 export default async function MaterialDetail({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const m = materialById(id);
+  const m = await getMaterial(id);
   if (!m) notFound();
 
-  const sup = supplierById(m.supplierId);
+  const sup = m.supplier;
   const tone = simpleOf(m);
-  const paper = paperStatus[m.submittalStatus];
-  const action = whatToDo(m, sup.name);
+  const paper = paperStatus[m.paperwork];
+  const action = whatToDo(m, sup?.name ?? null);
   const ActionIcon =
-    m.submittalStatus === "revise_resubmit"
+    m.paperwork === "revise_resubmit"
       ? FileWarning
       : m.onTimeProbability < 0.6
       ? Phone
@@ -61,12 +51,17 @@ export default async function MaterialDetail({
 
   return (
     <div className="container-luxe max-w-4xl space-y-6 py-6">
-      <Link
-        href="/dashboard/materials"
-        className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to my materials
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link
+          href="/dashboard/materials"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to my materials
+        </Link>
+        <Link href={`/dashboard/materials/${m.id}/edit`} className="btn-ghost text-sm">
+          <Pencil className="h-4 w-4" /> Edit
+        </Link>
+      </div>
 
       {/* Header */}
       <div className="card p-6">
@@ -81,12 +76,16 @@ export default async function MaterialDetail({
           <span className="flex items-center gap-1.5">
             <Boxes className="h-4 w-4" /> {m.qty} {m.unit}
           </span>
-          <span className="flex items-center gap-1.5">
-            <MapPin className="h-4 w-4" /> Goes to {m.location}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Building2 className="h-4 w-4" /> Made by {sup.name}
-          </span>
+          {m.location && (
+            <span className="flex items-center gap-1.5">
+              <MapPin className="h-4 w-4" /> Goes to {m.location}
+            </span>
+          )}
+          {sup && (
+            <span className="flex items-center gap-1.5">
+              <Building2 className="h-4 w-4" /> Made by {sup.name}
+            </span>
+          )}
         </div>
       </div>
 
@@ -112,10 +111,10 @@ export default async function MaterialDetail({
         <p className="text-sm text-slate-500">Compare when it comes with when you need it.</p>
         <ArrivalBar material={m} />
         <div className="mt-2 grid grid-cols-2 gap-3">
-          <BigFact label="You need it by" value={formatDate(m.neededBy)} tone="need" />
+          <BigFact label="You need it by" value={m.needBy ? formatDate(m.needBy) : "Not set"} tone="need" />
           <BigFact
             label="It should arrive"
-            value={formatDate(m.eta.p50)}
+            value={m.expectedArrival ? formatDate(m.expectedArrival) : "Not set"}
             tone={tone === "good" ? "good" : "late"}
           />
         </div>
@@ -126,21 +125,27 @@ export default async function MaterialDetail({
         {/* Supplier */}
         <div className="card p-5">
           <h2 className="text-base font-semibold text-slate-900">Who is making it</h2>
-          <div className="mt-3 flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-100 text-slate-500">
-              <Building2 className="h-5 w-5" />
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-slate-900">{sup.name}</p>
-              <p className="text-xs text-slate-400">{sup.location}</p>
-            </div>
-          </div>
-          <div className="mt-3">
-            <SimpleBadge tone={supplierTone(sup.onTimeRate)} size="sm" />
-            <p className="mt-1.5 text-sm text-slate-600">
-              This supplier is <b>{supplierText(sup.onTimeRate).toLowerCase()}</b>.
-            </p>
-          </div>
+          {sup ? (
+            <>
+              <div className="mt-3 flex items-center gap-3">
+                <span className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-100 text-slate-500">
+                  <Building2 className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">{sup.name}</p>
+                  <p className="text-xs text-slate-400">{sup.location}</p>
+                </div>
+              </div>
+              <div className="mt-3">
+                <SimpleBadge tone={supplierTone(sup.onTimeRate)} size="sm" />
+                <p className="mt-1.5 text-sm text-slate-600">
+                  This supplier is <b>{supplierText(sup.onTimeRate).toLowerCase()}</b>.
+                </p>
+              </div>
+            </>
+          ) : (
+            <p className="mt-3 text-sm text-slate-400">No supplier set for this order yet.</p>
+          )}
         </div>
 
         {/* Paperwork */}
@@ -149,7 +154,7 @@ export default async function MaterialDetail({
           <div className="mt-3">
             <SimpleBadge tone={paper.tone} size="sm" />
             <p className="mt-2 text-sm text-slate-600">{paper.label}.</p>
-            {m.submittalStatus === "revise_resubmit" ? (
+            {m.paperwork === "revise_resubmit" ? (
               <p className="mt-1 text-sm text-slate-500">
                 The order can&apos;t be finished until this is approved.
               </p>
@@ -162,28 +167,13 @@ export default async function MaterialDetail({
         </div>
       </div>
 
-      {/* Story so far */}
-      <div className="card p-5 sm:p-6">
-        <h2 className="mb-4 text-base font-semibold text-slate-900">What has happened so far</h2>
-        <ol className="relative space-y-5 border-l-2 border-hairline pl-6">
-          {m.timeline.map((e, i) => (
-            <li key={i} className="relative">
-              <span
-                className={`absolute -left-[29px] top-1 h-3.5 w-3.5 rounded-full ring-4 ring-white ${
-                  eventTone[e.kind]
-                }`}
-              />
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-slate-900">{e.label}</p>
-                <time className="shrink-0 text-xs text-slate-400">
-                  {formatDate(e.date, { year: "numeric" })}
-                </time>
-              </div>
-              {e.detail && <p className="mt-1 text-sm text-slate-500">{e.detail}</p>}
-            </li>
-          ))}
-        </ol>
-      </div>
+      {/* Notes */}
+      {m.notes && (
+        <div className="card p-5 sm:p-6">
+          <h2 className="mb-2 text-base font-semibold text-slate-900">Notes</h2>
+          <p className="text-sm leading-relaxed text-slate-600">{m.notes}</p>
+        </div>
+      )}
 
       {/* If delivering soon */}
       {m.status === "in_transit" && (

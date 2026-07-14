@@ -19,14 +19,14 @@ import {
   LogOut,
   MessageCircleQuestion,
 } from "lucide-react";
-import { materials, supplierById, PROJECT } from "@/lib/data";
 import { cn, formatDate } from "@/lib/utils";
 import { simpleOf, latenessText } from "@/lib/plain";
+import type { MaterialVM, OrgInfo } from "@/lib/materials";
 import { supabaseConfigured } from "@/lib/supabase/config";
 import { Logo, SimpleBadge } from "./ui";
 import { NavList, ProjectCard, SidebarFooter } from "./Sidebar";
 
-export function Topbar() {
+export function Topbar({ items, org }: { items: MaterialVM[]; org: OrgInfo }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Lock body scroll when the mobile drawer is open.
@@ -48,12 +48,12 @@ export function Topbar() {
           >
             <Menu className="h-4 w-4" />
           </button>
-          <WorkspaceSelector />
-          <QuickSearch />
+          <WorkspaceSelector org={org} />
+          <QuickSearch items={items} />
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="hidden text-xs font-medium text-slate-400 lg:inline">
-            {new Date(PROJECT.today).toLocaleDateString("en-US", {
+            {new Date().toLocaleDateString("en-US", {
               weekday: "long",
               month: "long",
               day: "numeric",
@@ -65,7 +65,7 @@ export function Topbar() {
           >
             <Sparkles className="h-3.5 w-3.5" /> Ask AI
           </Link>
-          <Notifications />
+          <Notifications items={items} />
           <AccountMenu />
         </div>
       </header>
@@ -90,7 +90,7 @@ export function Topbar() {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <ProjectCard />
+            <ProjectCard org={org} />
             <NavList onNavigate={() => setMenuOpen(false)} />
             <SidebarFooter onNavigate={() => setMenuOpen(false)} />
           </div>
@@ -100,7 +100,7 @@ export function Topbar() {
   );
 }
 
-function QuickSearch() {
+function QuickSearch({ items }: { items: MaterialVM[] }) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
@@ -117,17 +117,14 @@ function QuickSearch() {
 
   const query = q.trim().toLowerCase();
   const results = query
-    ? materials
-        .filter((m) => {
-          const sup = supplierById(m.supplierId);
-          return (
+    ? items
+        .filter(
+          (m) =>
             m.name.toLowerCase().includes(query) ||
-            m.poNumber.toLowerCase().includes(query) ||
-            m.sku.toLowerCase().includes(query) ||
-            sup.name.toLowerCase().includes(query) ||
-            m.location.toLowerCase().includes(query)
-          );
-        })
+            (m.supplier?.name.toLowerCase().includes(query) ?? false) ||
+            (m.location?.toLowerCase().includes(query) ?? false) ||
+            (m.notes?.toLowerCase().includes(query) ?? false)
+        )
         .slice(0, 6)
     : [];
 
@@ -189,7 +186,7 @@ function QuickSearch() {
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium text-slate-900">{m.name}</span>
                   <span className="block truncate text-xs text-slate-400">
-                    Made by {supplierById(m.supplierId).name}
+                    Made by {m.supplier?.name ?? "—"}
                   </span>
                 </span>
                 <SimpleBadge tone={simpleOf(m)} size="sm" />
@@ -202,7 +199,7 @@ function QuickSearch() {
   );
 }
 
-function Notifications() {
+function Notifications({ items }: { items: MaterialVM[] }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -214,12 +211,11 @@ function Notifications() {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  const alerts = materials
+  const alerts = items
     .filter((m) => simpleOf(m) !== "good")
     .sort(
       (a, b) =>
-        b.criticalPathSlipDays * b.costOfDelayPerDay -
-        a.criticalPathSlipDays * a.costOfDelayPerDay
+        b.buildingDelayDays * b.costOfDelayPerDay - a.buildingDelayDays * a.costOfDelayPerDay
     );
 
   return (
@@ -255,7 +251,8 @@ function Notifications() {
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium text-slate-900">{m.name}</span>
                   <span className="block text-xs text-slate-400">
-                    {latenessText(m)} · need by {formatDate(m.neededBy)}
+                    {latenessText(m)}
+                    {m.needBy ? ` · need by ${formatDate(m.needBy)}` : ""}
                   </span>
                 </span>
                 <ArrowRight className="h-4 w-4 shrink-0 text-slate-300" />
@@ -268,7 +265,7 @@ function Notifications() {
   );
 }
 
-function WorkspaceSelector() {
+function WorkspaceSelector({ org }: { org: OrgInfo }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -289,10 +286,10 @@ function WorkspaceSelector() {
         aria-label="Choose site"
       >
         <span className="grid h-6 w-6 place-items-center rounded-md bg-gradient-to-br from-primary-500 to-primary-800 text-[11px] font-bold text-white">
-          V
+          {org.companyName.charAt(0).toUpperCase()}
         </span>
         <span className="max-w-[9rem] truncate text-sm font-medium text-slate-700">
-          Vertex Construction
+          {org.companyName}
         </span>
         <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
       </button>
@@ -311,8 +308,8 @@ function WorkspaceSelector() {
               <Building2 className="h-4 w-4" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium text-slate-900">{PROJECT.name}</span>
-              <span className="block text-xs text-slate-400">{PROJECT.location}</span>
+              <span className="block truncate text-sm font-medium text-slate-900">{org.projectName}</span>
+              <span className="block text-xs text-slate-400">{org.projectLocation}</span>
             </span>
             <Check className="h-4 w-4 text-primary-600" />
           </Link>
