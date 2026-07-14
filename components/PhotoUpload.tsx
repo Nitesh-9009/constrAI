@@ -5,10 +5,10 @@ import { Camera, Loader2, ScanLine, Check, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
-  "Uploading site photo…",
-  "Qwen2.5-VL reading fabrication state…",
-  "Cross-checking against detail S-204…",
-  "Updating Material Knowledge Graph…",
+  "Uploading your photo…",
+  "Looking at what is in the photo…",
+  "Checking it against the plan…",
+  "Updating your order…",
 ];
 
 export function PhotoUpload() {
@@ -39,8 +39,8 @@ export function PhotoUpload() {
             <Camera className="h-4 w-4" />
           </span>
           <div>
-            <p className="text-sm font-semibold text-slate-900">Update by photo</p>
-            <p className="text-xs text-slate-400">No forms — the VLM reads the site</p>
+            <p className="text-sm font-semibold text-slate-900">Update an order with a photo</p>
+            <p className="text-xs text-slate-400">No typing. Just take a picture.</p>
           </div>
         </div>
       </div>
@@ -55,9 +55,9 @@ export function PhotoUpload() {
               <ScanLine className="h-6 w-6" />
             </span>
             <span className="text-sm font-medium text-slate-700">
-              Drop a fab-shop photo to auto-update status
+              Take a photo to update an order
             </span>
-            <span className="text-xs text-slate-400">Tap to simulate — rebar bay, Level 3</span>
+            <span className="text-xs text-slate-400">Tap here to try it — steel bay, Level 3</span>
           </button>
         )}
 
@@ -88,23 +88,22 @@ export function PhotoUpload() {
           <div className="animate-fade-up space-y-3">
             <div className="rounded-xl border border-primary-200 bg-primary-50/60 p-4">
               <p className="text-sm font-medium text-slate-900">
-                #8 Rebar — Level 3 · <span className="text-primary-700">60% fabricated</span>
+                Steel — Level 3 · <span className="text-primary-700">60% made</span>
               </p>
               <p className="mt-1 text-xs text-slate-500">
-                VLM counted 11 of 18.4 tons bent & tagged. Status auto-updated to{" "}
-                <span className="font-medium text-warning-700">fabricating</span> and written to the graph.
+                The photo showed 11 of 18.4 tons are ready. We updated this order for you — no typing needed.
               </p>
             </div>
             <div className="flex items-start gap-2 rounded-xl border border-danger-500/20 bg-danger-50/60 p-4">
               <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-danger-500" />
               <p className="text-xs text-slate-600">
-                <span className="font-semibold text-danger-700">Spec mismatch flagged:</span> 2
-                bundles show wrong bar mark vs detail S-204. ConstrAI opened an RFI draft for the
-                foreman to approve.
+                <span className="font-semibold text-danger-700">We found a problem:</span> 2
+                bundles have the wrong tag and do not match the plan. We saved a note for the
+                foreman to check.
               </p>
             </div>
             <button onClick={() => setState("idle")} className="btn-ghost w-full text-xs">
-              Run again
+              Try again
             </button>
           </div>
         )}

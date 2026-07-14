@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Material, Risk, riskOf } from "@/lib/types";
+import type { Simple } from "@/lib/plain";
+import { AlertTriangle, Clock3, CheckCircle2 } from "lucide-react";
 
 export function Logo({ className }: { className?: string }) {
   return (
@@ -56,6 +58,58 @@ export function RiskBadge({ risk, className }: { risk: Risk; className?: string 
   );
 }
 
+/** Big, friendly status badge for non-technical users. */
+const simpleStyles: Record<Simple, { cls: string; Icon: typeof AlertTriangle; label: string }> = {
+  late: {
+    cls: "border-danger-500/25 bg-danger-50 text-danger-700",
+    Icon: AlertTriangle,
+    label: "Running late",
+  },
+  risky: {
+    cls: "border-warning-500/25 bg-warning-50 text-warning-700",
+    Icon: Clock3,
+    label: "Might be late",
+  },
+  good: {
+    cls: "border-success-500/25 bg-success-50 text-success-700",
+    Icon: CheckCircle2,
+    label: "On time",
+  },
+};
+
+export function SimpleBadge({
+  tone,
+  size = "md",
+  className,
+}: {
+  tone: Simple;
+  size?: "sm" | "md" | "lg";
+  className?: string;
+}) {
+  const s = simpleStyles[tone];
+  const Icon = s.Icon;
+  const sizing =
+    size === "lg"
+      ? "px-4 py-2 text-base"
+      : size === "sm"
+      ? "px-2.5 py-1 text-xs"
+      : "px-3 py-1.5 text-sm";
+  const iconSize = size === "lg" ? "h-5 w-5" : size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border font-semibold",
+        sizing,
+        s.cls,
+        className
+      )}
+    >
+      <Icon className={iconSize} />
+      {s.label}
+    </span>
+  );
+}
+
 const statusStyles: Record<string, string> = {
   submitted: "border-slate-200 bg-slate-50 text-slate-600",
   approved: "border-sky-200 bg-sky-50 text-sky-700",
@@ -65,10 +119,19 @@ const statusStyles: Record<string, string> = {
   delivered: "border-success-500/25 bg-success-50 text-success-700",
 };
 
+const statusWords: Record<string, string> = {
+  submitted: "Order sent",
+  approved: "Order approved",
+  ordered: "Order placed",
+  fabricating: "Being made",
+  in_transit: "On the way",
+  delivered: "Arrived",
+};
+
 export function StatusPill({ status }: { status: string }) {
   return (
-    <span className={cn("chip capitalize", statusStyles[status] ?? statusStyles.submitted)}>
-      {status.replace("_", " ")}
+    <span className={cn("chip", statusStyles[status] ?? statusStyles.submitted)}>
+      {statusWords[status] ?? status.replace("_", " ")}
     </span>
   );
 }

@@ -31,7 +31,7 @@ export default function GlobalError({
             <RotateCcw className="h-4 w-4" /> Try again
           </button>
           <Link href="/dashboard" className="btn-ghost">
-            Control Tower
+            Go to dashboard
           </Link>
         </div>
       </div>

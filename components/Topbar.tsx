@@ -16,8 +16,9 @@ import {
 } from "lucide-react";
 import { materials, supplierById, PROJECT } from "@/lib/data";
 import { riskOf } from "@/lib/types";
-import { cn, formatDate, pct } from "@/lib/utils";
-import { Logo, RiskBadge } from "./ui";
+import { cn, formatDate } from "@/lib/utils";
+import { simpleOf, latenessText } from "@/lib/plain";
+import { Logo, SimpleBadge } from "./ui";
 import { NavList, ProjectCard, SidebarFooter } from "./Sidebar";
 
 export function Topbar() {
@@ -161,7 +162,7 @@ function QuickSearch() {
               setOpen(false);
             }
           }}
-          placeholder="Search POs, materials, suppliers…"
+          placeholder="Search your materials…"
           aria-label="Search materials"
           className="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
         />
@@ -188,10 +189,10 @@ function QuickSearch() {
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium text-slate-900">{m.name}</span>
                   <span className="block truncate text-xs text-slate-400">
-                    {m.poNumber} · {supplierById(m.supplierId).name}
+                    Made by {supplierById(m.supplierId).name}
                   </span>
                 </span>
-                <RiskBadge risk={riskOf(m)} />
+                <SimpleBadge tone={simpleOf(m)} size="sm" />
               </button>
             ))
           )}
@@ -254,7 +255,7 @@ function Notifications() {
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium text-slate-900">{m.name}</span>
                   <span className="block text-xs text-slate-400">
-                    {pct(m.onTimeProbability)} on-time · need {formatDate(m.neededBy)}
+                    {latenessText(m)} · need by {formatDate(m.neededBy)}
                   </span>
                 </span>
                 <ArrowRight className="h-4 w-4 shrink-0 text-slate-300" />

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings, ArrowUpRight, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import { Logo } from "./ui";
 import { navItems } from "./nav";
 import { cn } from "@/lib/utils";
@@ -12,9 +12,12 @@ export function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
     <nav className="flex-1 space-y-1 px-3" aria-label="Primary">
-      <p className="px-3 pb-1.5 pt-2 label-muted">Workspace</p>
+      <p className="px-3 pb-1.5 pt-2 label-muted">Menu</p>
       {navItems.map((item) => {
-        const active = item.href === "/dashboard" && pathname === "/dashboard";
+        const active =
+          item.href === "/dashboard"
+            ? pathname === "/dashboard"
+            : pathname.startsWith(item.href);
         const Icon = item.icon;
         return (
           <Link
@@ -54,12 +57,10 @@ export function ProjectCard() {
         <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary-600 text-white shadow-soft">
           <ShieldCheck className="h-4 w-4" />
         </span>
-        <p className="label-muted text-primary-700/70">Active project</p>
+        <p className="label-muted text-primary-700/70">Your site</p>
       </div>
       <p className="mt-2 text-sm font-semibold text-slate-900">{PROJECT.name}</p>
-      <p className="text-xs text-slate-500">
-        {PROJECT.location} · {PROJECT.code}
-      </p>
+      <p className="text-xs text-slate-500">{PROJECT.location}</p>
     </div>
   );
 }
@@ -68,19 +69,11 @@ export function SidebarFooter({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="space-y-1 px-3 pb-4">
       <Link
-        href="/dashboard#settings"
-        onClick={onNavigate}
-        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
-      >
-        <Settings className="h-5 w-5 text-slate-400" strokeWidth={1.8} />
-        Settings
-      </Link>
-      <Link
         href="/"
         onClick={onNavigate}
         className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:text-slate-700"
       >
-        Back to site
+        Home page
         <ArrowUpRight className="h-4 w-4" />
       </Link>
       <div className="mt-2 flex items-center gap-2 rounded-xl border border-hairline bg-slate-50 px-3 py-2">
@@ -88,7 +81,7 @@ export function SidebarFooter({ onNavigate }: { onNavigate?: () => void }) {
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success-500/60" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-success-500" />
         </span>
-        <span className="text-[11px] font-medium text-slate-500">Encrypted · SOC 2 secured</span>
+        <span className="text-[11px] font-medium text-slate-500">Your info is safe &amp; private</span>
       </div>
     </div>
   );

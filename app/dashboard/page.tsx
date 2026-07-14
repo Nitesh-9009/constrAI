@@ -1,255 +1,230 @@
-import { MaterialsBoard } from "@/components/MaterialsBoard";
-import { AssistantPanel } from "@/components/AssistantPanel";
-import { CascadeView } from "@/components/CascadeView";
+import Link from "next/link";
 import { PhotoUpload } from "@/components/PhotoUpload";
-import {
-  LogisticsSection,
-  DocumentsSection,
-  SettingsSection,
-} from "@/components/DashboardSections";
-import { KpiCard } from "@/components/ui";
+import { SimpleBadge } from "@/components/ui";
 import { Reveal } from "@/components/motion";
-import { portfolioStats, materials, taskById, PROJECT } from "@/lib/data";
-import { currency, pct } from "@/lib/utils";
+import { materials, supplierById, PROJECT } from "@/lib/data";
+import { formatDate } from "@/lib/utils";
 import {
+  simpleOf,
+  latenessText,
+  madeStatus,
+  whatToDo,
+  buildingDelayText,
+} from "@/lib/plain";
+import {
+  AlertTriangle,
+  Clock3,
+  CheckCircle2,
+  ArrowRight,
+  Sun,
   Boxes,
-  TriangleAlert,
-  CircleDollarSign,
-  ShieldCheck,
-  Sparkles,
-  CloudSun,
-  Activity,
-  ArrowUpRight,
-  Gauge,
-  Droplets,
-  Wind,
+  Truck,
+  MessageCircleQuestion,
+  ChevronRight,
 } from "lucide-react";
 
-export default function DashboardPage() {
-  const stats = portfolioStats();
-  const assistantLive = Boolean(process.env.OPENAI_API_KEY);
-  const topRisk = [...materials].sort(
+export default function TodayPage() {
+  const sorted = [...materials].sort(
     (a, b) =>
       b.criticalPathSlipDays * b.costOfDelayPerDay -
       a.criticalPathSlipDays * a.costOfDelayPerDay
-  )[0];
+  );
+  const late = sorted.filter((m) => simpleOf(m) === "late");
+  const risky = sorted.filter((m) => simpleOf(m) === "risky");
+  const good = sorted.filter((m) => simpleOf(m) === "good");
+  const topFix = late[0] ?? risky[0];
+  const fixSupplier = topFix ? supplierById(topFix.supplierId) : null;
 
-  const healthPct = Math.round((stats.onTrack / stats.total) * 100);
-  const safetyScore = 96 - stats.critical * 3;
+  const hour = new Date(PROJECT.today).getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="container-luxe grid grid-cols-1 gap-6 py-6 xl:grid-cols-[1fr_400px]">
-      {/* Left column */}
-      <div className="min-w-0 space-y-6">
-        {/* Page header */}
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-400">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-success-500/25 bg-success-50 px-2.5 py-1 text-success-700">
-                <ShieldCheck className="h-3.5 w-3.5" /> Live · Encrypted
-              </span>
-              <span className="hidden sm:inline">{PROJECT.gc}</span>
+    <div className="container-luxe max-w-5xl space-y-6 py-6">
+      {/* Greeting */}
+      <div>
+        <p className="text-sm font-medium text-slate-400">
+          {new Date(PROJECT.today).toLocaleDateString("en-US", {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          })}
+        </p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+          {greeting} 👷
+        </h1>
+        <p className="mt-1 text-base text-slate-500">
+          Here is how your materials look today at {PROJECT.name}.
+        </p>
+      </div>
+
+      {/* Three big status tiles */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Reveal delay={0}>
+          <StatusTile
+            href="/dashboard/materials"
+            count={good.length}
+            label="On time"
+            help="Nothing to worry about"
+            icon={CheckCircle2}
+            tone="good"
+          />
+        </Reveal>
+        <Reveal delay={0.05}>
+          <StatusTile
+            href="/dashboard/alerts"
+            count={risky.length}
+            label="Might be late"
+            help="Keep an eye on these"
+            icon={Clock3}
+            tone="risky"
+          />
+        </Reveal>
+        <Reveal delay={0.1}>
+          <StatusTile
+            href="/dashboard/alerts"
+            count={late.length}
+            label="Running late"
+            help="Do something now"
+            icon={AlertTriangle}
+            tone="late"
+          />
+        </Reveal>
+      </div>
+
+      {/* Fix this first */}
+      {topFix && fixSupplier && (
+        <Reveal delay={0.05}>
+          <div className="card overflow-hidden">
+            <div className="flex items-center gap-2 border-b border-hairline bg-danger-50/60 px-6 py-3">
+              <AlertTriangle className="h-5 w-5 text-danger-600" />
+              <p className="text-sm font-bold uppercase tracking-wide text-danger-700">
+                Fix this first today
+              </p>
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-              Material Control Tower
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              One predictive timeline for every material — approved, fabricating, delayed, in
-              transit, or landed.
-            </p>
-          </div>
-        </div>
-
-        {/* Bento — KPI row */}
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <Reveal delay={0}>
-            <KpiCard
-              label="Materials tracked"
-              value={String(stats.total)}
-              sub={PROJECT.name}
-              icon={Boxes}
-              tone="primary"
-            />
-          </Reveal>
-          <Reveal delay={0.05}>
-            <KpiCard
-              label="At risk"
-              value={String(stats.atRisk)}
-              sub={`${stats.critical} critical`}
-              icon={TriangleAlert}
-              tone="warning"
-            />
-          </Reveal>
-          <Reveal delay={0.1}>
-            <KpiCard
-              label="Delay exposure"
-              value={currency(stats.totalExposure)}
-              sub="critical-path cost"
-              icon={CircleDollarSign}
-              tone="danger"
-            />
-          </Reveal>
-          <Reveal delay={0.15}>
-            <KpiCard
-              label="On track"
-              value={String(stats.onTrack)}
-              sub="no action needed"
-              icon={ShieldCheck}
-              tone="success"
-            />
-          </Reveal>
-        </div>
-
-        {/* Bento — AI insight (large) + health ring + weather */}
-        <div className="grid gap-4 lg:grid-cols-3">
-          {/* AI Prediction — spans 2 */}
-          <Reveal className="lg:col-span-2" delay={0}>
-            <div className="ai-ring card relative h-full overflow-hidden p-6">
-              <div className="grid-lines pointer-events-none absolute inset-0 opacity-60" />
-              <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-primary-500/10 blur-3xl" />
-              <div className="relative">
-                <div className="flex items-center gap-2">
-                  <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-800 text-white shadow-glow">
-                    <Sparkles className="h-4 w-4" />
-                  </span>
-                  <span className="label-muted text-primary-700/80">AI prediction · top priority</span>
-                  <span className="ml-auto flex items-center gap-1.5">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-danger-500/60" />
-                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-danger-500" />
-                    </span>
-                    <span className="text-xs font-medium text-danger-600">Action needed</span>
-                  </span>
-                </div>
-                <h2 className="mt-3 text-xl font-semibold tracking-tight text-slate-900">
-                  {topRisk.name}
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
-                  {topRisk.poNumber} is {topRisk.fabricationProgress}% fabricated with a{" "}
-                  <span className="font-semibold text-slate-700">
-                    {pct(topRisk.onTimeProbability)}
-                  </span>{" "}
-                  chance of arriving on time. Forecast lands after the need date — putting{" "}
-                  {taskById(topRisk.linkedTaskId).name} and everything downstream at risk.
-                </p>
-                <div className="mt-5 flex flex-wrap items-center gap-3">
-                  <div className="rounded-xl border border-hairline bg-slate-50 px-4 py-2.5">
-                    <p className="label-muted">Exposure</p>
-                    <p className="mt-0.5 text-lg font-semibold tabular-nums text-danger-600">
-                      {currency(topRisk.criticalPathSlipDays * topRisk.costOfDelayPerDay)}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-hairline bg-slate-50 px-4 py-2.5">
-                    <p className="label-muted">Critical slip</p>
-                    <p className="mt-0.5 text-lg font-semibold tabular-nums text-slate-900">
-                      {topRisk.criticalPathSlipDays}d
-                    </p>
-                  </div>
-                  <a href={`/dashboard/materials/${topRisk.id}`} className="btn-primary ml-auto">
-                    Resolve now <ArrowUpRight className="h-4 w-4" />
-                  </a>
-                </div>
+            <div className="p-6">
+              <div className="flex flex-wrap items-center gap-3">
+                <SimpleBadge tone={simpleOf(topFix)} size="lg" />
+                <span className="text-sm font-semibold text-slate-500">{latenessText(topFix)}</span>
               </div>
-            </div>
-          </Reveal>
+              <h2 className="mt-3 text-xl font-semibold text-slate-900">{topFix.name}</h2>
+              <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-600">
+                It is <b>{madeStatus[topFix.status].toLowerCase()}</b>, and you need it by{" "}
+                <b>{formatDate(topFix.neededBy)}</b>. {buildingDelayText(topFix)}.
+              </p>
 
-          {/* Portfolio health ring + weather stacked */}
-          <div className="grid gap-4">
-            <Reveal delay={0.08}>
-              <div className="card card-hover flex items-center gap-4 p-5">
-                <HealthRing value={healthPct} />
+              <div className="mt-4 flex items-start gap-3 rounded-2xl border border-primary-200 bg-primary-50/60 p-4">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-600 text-white">
+                  <ArrowRight className="h-5 w-5" />
+                </span>
                 <div>
-                  <p className="label-muted">Portfolio health</p>
-                  <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">
-                    {healthPct}%
-                  </p>
-                  <p className="mt-0.5 flex items-center gap-1 text-xs font-medium text-success-600">
-                    <Gauge className="h-3.5 w-3.5" /> Safety score {safetyScore}
+                  <p className="text-sm font-bold text-primary-800">What to do</p>
+                  <p className="text-sm text-slate-700">
+                    {whatToDo(topFix, fixSupplier.name) ?? "Keep watching this order."}
                   </p>
                 </div>
               </div>
-            </Reveal>
-            <Reveal delay={0.12}>
-              <div className="card card-hover overflow-hidden p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="label-muted">Site weather</p>
-                    <p className="mt-1 text-lg font-semibold text-slate-900">{PROJECT.location}</p>
-                  </div>
-                  <CloudSun className="h-8 w-8 text-warning-500" />
-                </div>
-                <div className="mt-3 flex items-center gap-4 text-xs text-slate-500">
-                  <span className="flex items-center gap-1.5">
-                    <Activity className="h-3.5 w-3.5 text-slate-400" /> 94°F
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Droplets className="h-3.5 w-3.5 text-primary-400" /> 12%
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Wind className="h-3.5 w-3.5 text-slate-400" /> 8 mph
-                  </span>
-                </div>
-                <p className="mt-3 rounded-lg bg-success-50 px-3 py-2 text-xs font-medium text-success-700">
-                  Clear — no pour delays expected
-                </p>
-              </div>
-            </Reveal>
+
+              <Link
+                href={`/dashboard/materials/${topFix.id}`}
+                className="btn-primary mt-5 text-base"
+              >
+                See full details <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
-        </div>
+        </Reveal>
+      )}
 
-        <MaterialsBoard />
-
-        <section id="schedule" className="scroll-mt-24">
-          <h2 className="mb-3 text-lg font-semibold tracking-tight text-slate-900">Schedule impact</h2>
-          <CascadeView materialId={topRisk.id} />
-        </section>
-
-        <LogisticsSection />
-        <DocumentsSection />
-        <SettingsSection assistantLive={assistantLive} />
+      {/* Weather + quick links */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Reveal delay={0}>
+          <div className="card card-hover flex items-center gap-4 p-5">
+            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-warning-50 text-warning-500">
+              <Sun className="h-7 w-7" />
+            </span>
+            <div>
+              <p className="text-base font-semibold text-slate-900">Good weather for work</p>
+              <p className="text-sm text-slate-500">
+                {PROJECT.location} · Sunny, 94°F. No rain expected today.
+              </p>
+            </div>
+          </div>
+        </Reveal>
+        <Reveal delay={0.05}>
+          <div className="card p-5">
+            <p className="label-muted">Go to</p>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <QuickLink href="/dashboard/materials" icon={Boxes} label="Materials" />
+              <QuickLink href="/dashboard/deliveries" icon={Truck} label="Deliveries" />
+              <QuickLink href="/dashboard/help" icon={MessageCircleQuestion} label="Get help" />
+            </div>
+          </div>
+        </Reveal>
       </div>
 
-      {/* Right column */}
-      <div className="space-y-6">
-        <div className="glass sticky top-20 h-[560px] overflow-hidden">
-          <AssistantPanel />
-        </div>
+      {/* Photo update */}
+      <Reveal delay={0}>
         <PhotoUpload />
-      </div>
+      </Reveal>
     </div>
   );
 }
 
-/** Circular progress ring for portfolio health. */
-function HealthRing({ value }: { value: number }) {
-  const r = 26;
-  const c = 2 * Math.PI * r;
-  const offset = c - (value / 100) * c;
+function StatusTile({
+  href,
+  count,
+  label,
+  help,
+  icon: Icon,
+  tone,
+}: {
+  href: string;
+  count: number;
+  label: string;
+  help: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tone: "good" | "risky" | "late";
+}) {
+  const styles = {
+    good: "bg-success-50 text-success-600 border-success-500/20",
+    risky: "bg-warning-50 text-warning-600 border-warning-500/20",
+    late: "bg-danger-50 text-danger-600 border-danger-500/20",
+  }[tone];
+  const num = {
+    good: "text-success-700",
+    risky: "text-warning-700",
+    late: "text-danger-700",
+  }[tone];
   return (
-    <div className="relative grid h-16 w-16 shrink-0 place-items-center">
-      <svg viewBox="0 0 64 64" className="h-16 w-16 -rotate-90">
-        <circle cx="32" cy="32" r={r} fill="none" stroke="#eef2f8" strokeWidth="7" />
-        <circle
-          cx="32"
-          cy="32"
-          r={r}
-          fill="none"
-          stroke="url(#ringGrad)"
-          strokeWidth="7"
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={offset}
-        />
-        <defs>
-          <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#3B82F6" />
-            <stop offset="100%" stopColor="#10B981" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <span className="absolute grid h-9 w-9 place-items-center rounded-full bg-primary-50 text-primary-600">
-        <ShieldCheck className="h-4 w-4" />
-      </span>
-    </div>
+    <Link href={href} className="card card-hover block p-5">
+      <div className="flex items-center justify-between">
+        <span className={`grid h-11 w-11 place-items-center rounded-2xl border ${styles}`}>
+          <Icon className="h-6 w-6" />
+        </span>
+        <span className={`text-4xl font-bold tabular-nums ${num}`}>{count}</span>
+      </div>
+      <p className="mt-3 text-lg font-semibold text-slate-900">{label}</p>
+      <p className="text-sm text-slate-500">{help}</p>
+    </Link>
+  );
+}
+
+function QuickLink({
+  href,
+  icon: Icon,
+  label,
+}: {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex flex-col items-center gap-2 rounded-2xl border border-hairline bg-slate-50 p-4 text-center transition hover:border-primary-200 hover:bg-primary-50/50"
+    >
+      <Icon className="h-6 w-6 text-primary-600" />
+      <span className="text-xs font-semibold text-slate-700">{label}</span>
+    </Link>
   );
 }

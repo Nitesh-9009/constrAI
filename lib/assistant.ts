@@ -7,7 +7,15 @@ import {
   PROJECT,
 } from "./data";
 import { Material, riskOf } from "./types";
-import { currency, formatDate, pct } from "./utils";
+import { currency, formatDate } from "./utils";
+import {
+  simpleOf,
+  simpleWord,
+  latenessText,
+  madeStatus,
+  buildingDelayText,
+  supplierText,
+} from "./plain";
 
 export interface AssistantAction {
   id: string;
@@ -25,18 +33,20 @@ export interface AssistantAnswer {
 
 function describeMaterial(m: Material): string {
   const sup = supplierById(m.supplierId);
-  const risk = riskOf(m);
-  const cod = m.criticalPathSlipDays * m.costOfDelayPerDay;
+  const tone = simpleOf(m);
+  const perDay = m.costOfDelayPerDay;
   return [
-    `**${m.name}** (${m.poNumber}) — ${m.status.replace("_", " ")}, ${m.fabricationProgress}% fabricated.`,
-    `On-time probability **${pct(m.onTimeProbability)}**; forecast p50 **${formatDate(
-      m.eta.p50
-    )}** vs need **${formatDate(m.neededBy)}**.`,
-    risk === "high"
-      ? `Risk **HIGH** — ${m.criticalPathSlipDays}-day critical-path slip (${currency(
-          cod
-        )} exposure). Supplier ${sup.name} runs ${pct(sup.onTimeRate)} on-time.`
-      : `Risk ${risk.toUpperCase()}.`,
+    `**${m.name}** — ${madeStatus[m.status].toLowerCase()} by ${sup.name}.`,
+    `It should arrive **${formatDate(m.eta.p50)}**, and you need it by **${formatDate(
+      m.neededBy
+    )}** (${latenessText(m)}).`,
+    tone === "late"
+      ? `This is **running late**. Every day it is late costs about **${currency(
+          perDay
+        )}**, and it ${buildingDelayText(m).toLowerCase()}.`
+      : tone === "risky"
+      ? `This **might be late** — keep an eye on it.`
+      : `This one looks **on time**. Nothing to do.`,
   ].join(" ");
 }
 
@@ -46,26 +56,26 @@ function actionsFor(m: Material): AssistantAction[] {
   if (m.onTimeProbability < 0.6) {
     acts.push({
       id: `escalate-${m.id}`,
-      label: `Draft escalation to ${sup.name}`,
+      label: `Call ${sup.name}`,
       kind: "escalate",
-      detail: `Chase ${m.poNumber} — request firm ship date and expedite ${m.name}.`,
+      detail: `Ask them to hurry up your order and give you a firm delivery date.`,
     });
   }
   if (m.criticalPathSlipDays >= 1) {
     const task = taskById(m.linkedTaskId);
     acts.push({
       id: `reseq-${m.id}`,
-      label: `Propose re-sequence of "${task.name}"`,
+      label: `Plan other work first`,
       kind: "resequence",
-      detail: `Shift ${task.name} by ${m.criticalPathSlipDays} day(s) or resequence non-dependent work to protect the critical path.`,
+      detail: `Move "${task.name}" a little later so the crew is not left standing around waiting.`,
     });
   }
   if (m.submittalStatus === "revise_resubmit") {
     acts.push({
       id: `flag-${m.id}`,
-      label: `Flag submittal blocker`,
+      label: `Get the papers approved`,
       kind: "flag",
-      detail: `${m.name} fabrication is gated by a revise/resubmit — escalate the submittal turnaround.`,
+      detail: `The order cannot be finished until the paperwork is approved. Push to get it signed off.`,
     });
   }
   return acts;
@@ -86,16 +96,23 @@ export function answerLocally(question: string): AssistantAnswer {
   );
   const topRisk = ranked[0];
 
-  // Blocking / pour / critical path
+  // What's late / needs attention / what should I do
   if (
     q.includes("block") ||
     q.includes("pour") ||
     q.includes("critical") ||
-    q.includes("at risk") ||
-    q.includes("risk this week")
+    q.includes("risk") ||
+    q.includes("late") ||
+    q.includes("problem") ||
+    q.includes("wrong") ||
+    q.includes("attention") ||
+    q.includes("today") ||
+    q.includes("do") ||
+    q.includes("worst") ||
+    q.includes("fix") ||
+    q.includes("help")
   ) {
-    // If the question names a specific task/area (e.g. "the pour", "level 3"),
-    // surface the riskiest material gating that task; otherwise the global top risk.
+    // If the question names the pour / level 3, focus on what gates it.
     let focus = topRisk;
     if (q.includes("pour") || q.includes("level 3") || q.includes("l3") || q.includes("slab")) {
       const gating = materials
@@ -105,19 +122,13 @@ export function answerLocally(question: string): AssistantAnswer {
     }
     const cascade = cascadeFor(focus.id);
     const cascadeText = cascade
-      .map((c) => `${c.task.name} (+${c.slipDays}d)`)
-      .join(" → ");
+      .map((c) => `${c.task.name} (${c.slipDays} day${c.slipDays > 1 ? "s" : ""} later)`)
+      .join(", ");
     return {
       answer: [
-        `The biggest blocker is ${describeMaterial(focus)}`,
-        cascade.length
-          ? `\n\n**Cascade:** ${cascadeText}. Left unmanaged this puts **${currency(
-              focus.criticalPathSlipDays * focus.costOfDelayPerDay
-            )}** of critical-path exposure at stake.`
-          : "",
-        `\n\nAcross the project: **${stats.atRisk}/${stats.total}** materials at risk, **${currency(
-          stats.totalExposure
-        )}** total delay exposure.`,
+        `The most important one to fix is: ${describeMaterial(focus)}`,
+        cascade.length ? `\n\nIf it stays late, it also holds up: ${cascadeText}.` : "",
+        `\n\nRight now **${stats.atRisk} of ${stats.total}** of your materials need attention.`,
       ].join(""),
       materialIds: [focus.id],
       actions: actionsFor(focus),
@@ -125,11 +136,20 @@ export function answerLocally(question: string): AssistantAnswer {
     };
   }
 
-  // Named material lookups
+  // Named material lookups (with simple synonyms)
+  const synonyms: Record<string, string[]> = {
+    "mat-rebar-l3": ["steel", "rebar", "bar", "reinforc"],
+    "mat-concrete-l3": ["concrete", "cement", "pour", "mix"],
+    "mat-precast-south": ["precast", "panel"],
+    "mat-ahu-l4": ["ac", "air", "hvac", "cooling", "handling"],
+    "mat-switchgear": ["electric", "switch", "power"],
+    "mat-curtain-east": ["glass", "curtain", "window", "facade"],
+  };
   const named = materials.find(
     (m) =>
       q.includes(m.poNumber.toLowerCase()) ||
-      m.name.toLowerCase().split(" ").some((w) => w.length > 3 && q.includes(w))
+      m.name.toLowerCase().split(" ").some((w) => w.length > 3 && q.includes(w)) ||
+      (synonyms[m.id] ?? []).some((w) => q.includes(w))
   );
   if (named) {
     return {
@@ -140,13 +160,23 @@ export function answerLocally(question: string): AssistantAnswer {
     };
   }
 
-  // Delivered / on-track
-  if (q.includes("on track") || q.includes("delivered") || q.includes("good") || q.includes("safe")) {
+  // On time / all good
+  if (
+    q.includes("on time") ||
+    q.includes("on track") ||
+    q.includes("delivered") ||
+    q.includes("arrived") ||
+    q.includes("good") ||
+    q.includes("safe") ||
+    q.includes("fine") ||
+    q.includes("okay") ||
+    q.includes("ok")
+  ) {
     const safe = materials.filter((m) => riskOf(m) === "low");
     return {
-      answer: `**${safe.length}** materials are on track: ${safe
+      answer: `**${safe.length}** of your materials are on time: ${safe
         .map((m) => m.name)
-        .join(", ")}. No action needed — ConstrAI is monitoring their ETAs continuously.`,
+        .join(", ")}. Nothing to do for these — we keep watching them for you.`,
       materialIds: safe.map((m) => m.id),
       actions: [],
       confidence: 0.75,
@@ -154,31 +184,34 @@ export function answerLocally(question: string): AssistantAnswer {
   }
 
   // Supplier questions
-  if (q.includes("supplier") || q.includes("vendor")) {
+  if (
+    q.includes("supplier") ||
+    q.includes("vendor") ||
+    q.includes("company") ||
+    q.includes("who")
+  ) {
     const worst = [...materials].sort(
       (a, b) => supplierById(a.supplierId).onTimeRate - supplierById(b.supplierId).onTimeRate
     )[0];
     const sup = supplierById(worst.supplierId);
     return {
-      answer: `Weakest supplier on the project is **${sup.name}** (${pct(
+      answer: `The supplier that is late most often is **${sup.name}** — ${supplierText(
         sup.onTimeRate
-      )} on-time, ${sup.avgLeadDays}-day avg lead). They hold ${worst.name} (${worst.poNumber}), currently ${pct(
-        worst.onTimeProbability
-      )} likely on time.`,
+      ).toLowerCase()}. They are making **${worst.name}**, which is ${simpleWord[
+        simpleOf(worst)
+      ].toLowerCase()}. It may help to call them and check on your order.`,
       materialIds: [worst.id],
       actions: actionsFor(worst),
       confidence: 0.78,
     };
   }
 
-  // Default portfolio summary
+  // Default summary
   return {
     answer: [
-      `Here's the ${PROJECT.name} material picture: **${stats.atRisk}** of **${stats.total}** materials at risk, **${stats.critical}** critical, **${currency(
-        stats.totalExposure
-      )}** total delay exposure.`,
-      `\n\nTop concern: ${describeMaterial(topRisk)}`,
-      `\n\nAsk me "what's blocking the pour?", about a PO number, or "which supplier is weakest?"`,
+      `Here is how things look at ${PROJECT.name}: **${stats.atRisk} of ${stats.total}** materials need attention.`,
+      `\n\nThe most important one: ${describeMaterial(topRisk)}`,
+      `\n\nYou can ask me things like "what is late?", "what should I do today?", or "which supplier is often late?"`,
     ].join(""),
     materialIds: [topRisk.id],
     actions: actionsFor(topRisk),
@@ -193,9 +226,9 @@ export function buildSystemPrompt(): string {
       return `- ${m.name} | ${m.poNumber} | status ${m.status} ${m.fabricationProgress}% | need ${m.neededBy} | ETA p50 ${m.eta.p50} | on-time ${(m.onTimeProbability * 100).toFixed(0)}% | slip ${m.criticalPathSlipDays}d | $${m.costOfDelayPerDay}/day | supplier ${sup.name} (${(sup.onTimeRate * 100).toFixed(0)}% on-time) | task ${m.linkedTaskId} | ${m.flags?.join("; ") ?? ""}`;
     })
     .join("\n");
-  return `You are ConstrAI, a predictive material control tower for the construction project "${PROJECT.name}" (${PROJECT.location}). Today is ${PROJECT.today}.
-Answer procurement/schedule questions concisely and specifically using ONLY the material data below. Always ground answers in PO numbers, dates, on-time probabilities, and critical-path slip. When a material threatens the schedule, recommend a concrete action (draft escalation, re-sequence a task, reorder, or flag a submittal). Never invent materials, suppliers, or dates not present here.
+  return `You are ConstrAI, a friendly helper for a construction site manager who may not know technical words. The project is "${PROJECT.name}" (${PROJECT.location}). Today is ${PROJECT.today}.
+Answer in very simple, short sentences that anyone can understand. Do NOT use technical words, percentages, probabilities, or jargon like "critical path", "submittal", "forecast", or "lead time". Talk about whether a material is on time or running late, when it will arrive, when it is needed, and one clear thing to do. Use ONLY the information below. Never make up materials, suppliers, or dates.
 
-MATERIAL DATA:
+WHAT YOU KNOW (do not repeat the raw data; explain it simply):
 ${ctx}`;
 }

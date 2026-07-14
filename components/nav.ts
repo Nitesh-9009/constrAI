@@ -1,9 +1,9 @@
 import {
-  LayoutDashboard,
-  PackageSearch,
-  CalendarRange,
+  Home,
+  Boxes,
   Truck,
-  FileStack,
+  Bell,
+  MessageCircleQuestion,
   type LucideIcon,
 } from "lucide-react";
 
@@ -15,9 +15,9 @@ export interface NavItem {
 }
 
 export const navItems: NavItem[] = [
-  { href: "/dashboard", label: "Control Tower", icon: LayoutDashboard },
-  { href: "/dashboard#materials", label: "Materials", icon: PackageSearch },
-  { href: "/dashboard#schedule", label: "Schedule Impact", icon: CalendarRange },
-  { href: "/dashboard#logistics", label: "Logistics", icon: Truck },
-  { href: "/dashboard#documents", label: "Documents", icon: FileStack },
+  { href: "/dashboard", label: "Today", icon: Home },
+  { href: "/dashboard/materials", label: "My Materials", icon: Boxes },
+  { href: "/dashboard/deliveries", label: "Deliveries", icon: Truck },
+  { href: "/dashboard/alerts", label: "Needs Attention", icon: Bell },
+  { href: "/dashboard/help", label: "Ask for Help", icon: MessageCircleQuestion },
 ];

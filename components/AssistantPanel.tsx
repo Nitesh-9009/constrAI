@@ -31,10 +31,10 @@ interface Msg {
 }
 
 const SUGGESTIONS = [
-  "What's blocking the Level 3 pour?",
-  "What's at risk this week?",
-  "Tell me about PO-4155",
-  "Which supplier is weakest?",
+  "What is late?",
+  "What should I do today?",
+  "When will my steel arrive?",
+  "Which supplier is often late?",
 ];
 
 const actionIcon = {
@@ -62,7 +62,7 @@ export function AssistantPanel() {
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "assistant",
-      text: "I'm your material control tower. Ask about what's blocking the schedule, a specific PO, or which supplier is weakest — I'll predict the risk and propose an action.",
+      text: "Hi! Ask me anything about your materials in plain words. For example: **what is late?** or **what should I do today?**",
     },
   ]);
   const [input, setInput] = useState("");
@@ -126,7 +126,7 @@ export function AssistantPanel() {
         </span>
         <div>
           <p className="text-sm font-semibold text-slate-900">Ask ConstrAI</p>
-          <p className="text-xs text-slate-400">Predict → act, grounded in your project</p>
+          <p className="text-xs text-slate-400">Ask about your materials in plain words</p>
         </div>
       </div>
 
@@ -159,7 +159,7 @@ export function AssistantPanel() {
                         m.mode === "llm" ? "bg-primary-500" : "bg-slate-400"
                       )}
                     />
-                    {m.mode === "llm" ? "AI · Llama-3.3-70B" : "Grounded reasoning"}
+                    {m.mode === "llm" ? "Smart answer" : "Answer"}
                   </span>
                 </div>
               )}
@@ -175,7 +175,7 @@ export function AssistantPanel() {
                         href={`/dashboard/materials/${id}`}
                         className="chip border-hairline bg-white text-slate-600 transition hover:border-primary-300 hover:text-primary-700"
                       >
-                        {mat.poNumber} · {mat.name.split("—")[0].trim()}
+                        {mat.name.split("—")[0].trim()}
                         <ArrowRight className="h-3 w-3" />
                       </Link>
                     );
@@ -185,7 +185,7 @@ export function AssistantPanel() {
 
               {m.actions && m.actions.length > 0 && (
                 <div className="mt-3 space-y-2">
-                  <p className="label-muted">Recommended actions</p>
+                  <p className="label-muted">What to do</p>
                   {m.actions.map((a) => {
                     const Icon = actionIcon[a.kind];
                     const isDone = done[a.id];
@@ -256,7 +256,7 @@ export function AssistantPanel() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about any material, PO, or the schedule…"
+            placeholder="Type your question here…"
             className="flex-1 rounded-xl border border-hairline bg-slate-50 px-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 transition focus:border-primary-300 focus:bg-white focus:outline-none"
           />
           <button type="submit" disabled={loading || !input.trim()} className="btn-primary px-3">

@@ -15,7 +15,7 @@ export default function NotFound() {
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <Link href="/dashboard" className="btn-primary">
-            Open Control Tower
+            Go to my dashboard
           </Link>
           <Link href="/" className="btn-ghost">
             Home
