@@ -6,7 +6,7 @@ import {
   portfolioStats,
   PROJECT,
 } from "./data";
-import { Material, riskOf } from "./types";
+import { Material } from "./types";
 import { currency, formatDate } from "./utils";
 import {
   simpleOf,
@@ -172,7 +172,7 @@ export function answerLocally(question: string): AssistantAnswer {
     q.includes("okay") ||
     q.includes("ok")
   ) {
-    const safe = materials.filter((m) => riskOf(m) === "low");
+    const safe = materials.filter((m) => simpleOf(m) === "good");
     return {
       answer: `**${safe.length}** of your materials are on time: ${safe
         .map((m) => m.name)

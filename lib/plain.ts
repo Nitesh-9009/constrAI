@@ -1,13 +1,16 @@
-import { Material, riskOf } from "./types";
+import { Material } from "./types";
 import { daysBetween } from "./utils";
 
 /** Simple 3-state used everywhere in the plain-language UI. */
 export type Simple = "late" | "risky" | "good";
 
-/** Map the internal risk to a friendly 3-state. */
+/** Map the internal risk to a friendly 3-state — kept consistent with the dates the user sees. */
 export function simpleOf(m: Material): Simple {
-  const r = riskOf(m);
-  return r === "high" ? "late" : r === "medium" ? "risky" : "good";
+  const d = daysBetween(m.neededBy, m.eta.p50); // >0 = arrives after it's needed
+  if (d > 0) return "late"; // will arrive after you need it
+  if (d === 0) return "risky"; // arrives exactly on the day — cutting it close
+  if (m.onTimeProbability < 0.6) return "risky"; // early on paper, but supplier is unreliable
+  return "good"; // comfortably before you need it
 }
 
 export const simpleWord: Record<Simple, string> = {

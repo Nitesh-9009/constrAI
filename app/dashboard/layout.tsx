@@ -1,5 +1,6 @@
 import { Sidebar } from "@/components/Sidebar";
 import { Topbar } from "@/components/Topbar";
+import { FloatingAssistant } from "@/components/FloatingAssistant";
 
 export default function DashboardLayout({
   children,
@@ -13,6 +14,7 @@ export default function DashboardLayout({
         <Topbar />
         <main className="flex-1">{children}</main>
       </div>
+      <FloatingAssistant />
     </div>
   );
 }
