@@ -18,20 +18,20 @@ export default function Home() {
   return (
     <div className="relative overflow-hidden">
       {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-ink-800/60 bg-ink-950/70 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-hairline bg-white/80 backdrop-blur-xl">
         <div className="container-luxe flex items-center justify-between py-4">
           <Logo />
-          <nav className="hidden items-center gap-8 text-sm text-slate-400 md:flex">
-            <a href="#problem" className="hover:text-slate-200">Problem</a>
-            <a href="#how" className="hover:text-slate-200">How it works</a>
-            <a href="#tech" className="hover:text-slate-200">Technology</a>
+          <nav className="hidden items-center gap-8 text-sm text-slate-500 md:flex">
+            <a href="#problem" className="transition hover:text-slate-900">Problem</a>
+            <a href="#how" className="transition hover:text-slate-900">How it works</a>
+            <a href="#tech" className="transition hover:text-slate-900">Technology</a>
           </nav>
           <div className="flex items-center gap-3">
             <a
-              href="https://github.com/Nitesh-9009/kayakalp"
+              href="https://github.com/Nitesh-9009/constrAI"
               target="_blank"
               rel="noreferrer"
-              className="hidden text-slate-400 hover:text-slate-200 sm:block"
+              className="hidden text-slate-400 transition hover:text-slate-900 sm:block"
             >
               <Github className="h-5 w-5" />
             </a>
@@ -44,24 +44,25 @@ export default function Home() {
 
       {/* Hero */}
       <section className="relative">
-        <div className="grid-lines pointer-events-none absolute inset-0 opacity-30" />
+        <div className="grid-lines pointer-events-none absolute inset-0 opacity-70" />
+        <div className="pointer-events-none absolute left-1/2 top-0 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-primary-500/10 blur-3xl" />
         <div className="container-luxe relative py-20 sm:py-28">
           <div className="mx-auto max-w-3xl text-center">
-            <span className="chip mx-auto border-brand-500/30 bg-brand-500/10 text-brand-300">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
+            <span className="chip mx-auto border-primary-200 bg-primary-50 text-primary-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary-500" />
               Track 2 · Construction Supply Chain
             </span>
-            <h1 className="mt-6 text-4xl font-semibold leading-[1.08] tracking-tight text-white sm:text-6xl">
+            <h1 className="mt-6 text-4xl font-semibold leading-[1.08] tracking-tight text-slate-900 sm:text-6xl">
               The predictive{" "}
-              <span className="bg-gradient-to-r from-brand-300 to-brand-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary-500 to-primary-800 bg-clip-text text-transparent">
                 material control tower
               </span>{" "}
               for construction
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
-              Kayakalp fuses POs, submittals, drawings and job-site photos into one live,
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-500">
+              ConstrAI fuses POs, submittals, drawings and job-site photos into one live,
               predictive timeline — and answers the only question that matters:{" "}
-              <span className="text-slate-200">
+              <span className="text-slate-800">
                 will the material be here when the crew needs it, and if not, what do we do right
                 now?
               </span>
@@ -87,11 +88,11 @@ export default function Home() {
             ].map((q, i) => (
               <div
                 key={q}
-                className="card animate-fade-up p-4 text-center"
+                className="card card-hover animate-fade-up p-4 text-center"
                 style={{ animationDelay: `${i * 80}ms` }}
               >
-                <p className="text-sm font-medium text-slate-300">{q}</p>
-                <p className="mt-1 text-xs text-brand-400">answered</p>
+                <p className="text-sm font-medium text-slate-700">{q}</p>
+                <p className="mt-1 text-xs font-medium text-primary-600">answered</p>
               </div>
             ))}
           </div>
@@ -99,19 +100,19 @@ export default function Home() {
       </section>
 
       {/* Problem */}
-      <section id="problem" className="border-t border-ink-800/60 py-20">
+      <section id="problem" className="border-t border-hairline py-20">
         <div className="container-luxe">
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
             <div>
-              <p className="label-muted text-brand-400">The problem</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">
+              <p className="label-muted text-primary-600">The problem</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">
                 Materials get ordered. Then the chaos begins.
               </h2>
-              <p className="mt-4 text-slate-400">
+              <p className="mt-4 text-slate-500">
                 The data to answer the daily questions exists — but it&apos;s scattered across POs,
                 submittal logs, supplier emails, WhatsApp photos, delivery tickets, and the
                 schedule. No system fuses it, so a slipping order is discovered{" "}
-                <span className="text-slate-200">after the crew is already standing idle</span>.
+                <span className="font-medium text-slate-800">after the crew is already standing idle</span>.
                 Small material delays cascade along the critical path into missed milestones and
                 blown budgets.
               </p>
@@ -121,8 +122,8 @@ export default function Home() {
                   "Existing tools demand data entry crews will never do",
                   "Nobody prices the downstream cascade of a single late order",
                 ].map((t) => (
-                  <div key={t} className="flex items-start gap-2.5 text-sm text-slate-300">
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-risk-high" />
+                  <div key={t} className="flex items-start gap-2.5 text-sm text-slate-600">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-danger-500" />
                     {t}
                   </div>
                 ))}
@@ -142,18 +143,18 @@ export default function Home() {
                 ].map((s) => (
                   <div
                     key={s}
-                    className="rounded-xl border border-ink-700 bg-ink-850/50 px-3 py-3 text-sm text-slate-400"
+                    className="rounded-xl border border-hairline bg-slate-50 px-3 py-3 text-sm text-slate-500"
                   >
                     {s}
                   </div>
                 ))}
               </div>
-              <div className="mt-5 flex items-center justify-center gap-2 text-brand-400">
+              <div className="mt-5 flex items-center justify-center gap-2 text-primary-500">
                 <ArrowRight className="h-4 w-4 rotate-90" />
               </div>
-              <div className="mt-3 rounded-xl border border-brand-500/30 bg-brand-500/5 px-4 py-4 text-center">
-                <p className="text-sm font-semibold text-white">One live Material Knowledge Graph</p>
-                <p className="mt-1 text-xs text-slate-400">predict → simulate → act</p>
+              <div className="mt-3 rounded-xl border border-primary-200 bg-primary-50/60 px-4 py-4 text-center">
+                <p className="text-sm font-semibold text-slate-900">One live Material Knowledge Graph</p>
+                <p className="mt-1 text-xs text-slate-500">predict → simulate → act</p>
               </div>
             </div>
           </div>
@@ -161,14 +162,14 @@ export default function Home() {
       </section>
 
       {/* How it works — the loop */}
-      <section id="how" className="border-t border-ink-800/60 py-20">
+      <section id="how" className="border-t border-hairline py-20">
         <div className="container-luxe">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="label-muted text-brand-400">How it works</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">
+            <p className="label-muted text-primary-600">How it works</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">
               Ingest → Predict → Simulate → Act
             </h2>
-            <p className="mt-4 text-slate-400">
+            <p className="mt-4 text-slate-500">
               A closed loop that doesn&apos;t just report status — it prevents the delay.
             </p>
           </div>
@@ -202,15 +203,15 @@ export default function Home() {
             ].map((s) => {
               const Icon = s.icon;
               return (
-                <div key={s.step} className="card p-5">
+                <div key={s.step} className="card card-hover p-5">
                   <div className="flex items-center justify-between">
-                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-500/15 text-brand-400">
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary-50 text-primary-600">
                       <Icon className="h-5 w-5" />
                     </span>
-                    <span className="font-mono text-xs text-slate-600">{s.step}</span>
+                    <span className="font-mono text-xs text-slate-300">{s.step}</span>
                   </div>
-                  <h3 className="mt-4 text-base font-semibold text-white">{s.title}</h3>
-                  <p className="mt-1.5 text-sm text-slate-400">{s.body}</p>
+                  <h3 className="mt-4 text-base font-semibold text-slate-900">{s.title}</h3>
+                  <p className="mt-1.5 text-sm text-slate-500">{s.body}</p>
                 </div>
               );
             })}
@@ -218,7 +219,7 @@ export default function Home() {
 
           {/* Arc example */}
           <div className="card mt-6 overflow-hidden">
-            <div className="grid divide-y divide-ink-700 md:grid-cols-3 md:divide-x md:divide-y-0">
+            <div className="grid divide-y divide-[color:theme(colors.hairline)] md:grid-cols-3 md:divide-x md:divide-y-0">
               {[
                 {
                   icon: MessageSquareText,
@@ -239,11 +240,11 @@ export default function Home() {
                 const Icon = c.icon;
                 return (
                   <div key={c.tag} className="p-5">
-                    <div className="flex items-center gap-2 text-brand-400">
+                    <div className="flex items-center gap-2 text-primary-600">
                       <Icon className="h-4 w-4" />
-                      <span className="label-muted text-brand-400">{c.tag}</span>
+                      <span className="label-muted text-primary-600">{c.tag}</span>
                     </div>
-                    <p className="mt-3 text-sm text-slate-300">{c.text}</p>
+                    <p className="mt-3 text-sm text-slate-600">{c.text}</p>
                   </div>
                 );
               })}
@@ -253,11 +254,11 @@ export default function Home() {
       </section>
 
       {/* Technology */}
-      <section id="tech" className="border-t border-ink-800/60 py-20">
+      <section id="tech" className="border-t border-hairline py-20">
         <div className="container-luxe">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="label-muted text-brand-400">Go deeper than an API call</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">
+            <p className="label-muted text-primary-600">Go deeper than an API call</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">
               Five techniques, combined
             </h2>
           </div>
@@ -297,11 +298,11 @@ export default function Home() {
               const Icon = f.icon;
               return (
                 <div key={f.title} className="card card-hover p-5">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-ink-800 text-brand-400">
+                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary-50 text-primary-600">
                     <Icon className="h-5 w-5" />
                   </span>
-                  <h3 className="mt-4 text-base font-semibold text-white">{f.title}</h3>
-                  <p className="mt-1.5 text-sm text-slate-400">{f.body}</p>
+                  <h3 className="mt-4 text-base font-semibold text-slate-900">{f.title}</h3>
+                  <p className="mt-1.5 text-sm text-slate-500">{f.body}</p>
                 </div>
               );
             })}
@@ -318,7 +319,7 @@ export default function Home() {
               "Conformal prediction",
               "Open-source · on-prem capable",
             ].map((t) => (
-              <span key={t} className="chip border-ink-700 bg-ink-850/50 text-slate-400">
+              <span key={t} className="chip border-hairline bg-white text-slate-500 shadow-soft">
                 {t}
               </span>
             ))}
@@ -327,18 +328,19 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section className="border-t border-ink-800/60 py-20">
+      <section className="border-t border-hairline py-20">
         <div className="container-luxe">
           <div className="card relative overflow-hidden p-10 text-center">
-            <div className="grid-lines pointer-events-none absolute inset-0 opacity-30" />
+            <div className="grid-lines pointer-events-none absolute inset-0 opacity-50" />
+            <div className="pointer-events-none absolute left-1/2 top-0 h-52 w-[36rem] -translate-x-1/2 rounded-full bg-primary-500/10 blur-3xl" />
             <div className="relative mx-auto max-w-2xl">
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-500/15 text-brand-400 mx-auto">
+              <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-800 text-white shadow-glow">
                 <Camera className="h-6 w-6" />
               </span>
-              <h2 className="mt-5 text-3xl font-semibold tracking-tight text-white">
+              <h2 className="mt-5 text-3xl font-semibold tracking-tight text-slate-900">
                 See it predict, then act.
               </h2>
-              <p className="mt-3 text-slate-400">
+              <p className="mt-3 text-slate-500">
                 Open the control tower, ask what&apos;s blocking the pour, and watch a photo update
                 a material&apos;s status live.
               </p>
@@ -353,12 +355,12 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-ink-800/60 py-8">
+      <footer className="border-t border-hairline py-8">
         <div className="container-luxe flex flex-col items-center justify-between gap-4 text-sm text-slate-500 sm:flex-row">
-          <Logo className="opacity-80" />
+          <Logo />
           <p className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4" /> Kayakalp — material chaos, rejuvenated into a
-            predictive timeline.
+            <ShieldCheck className="h-4 w-4 text-success-500" /> ConstrAI — material chaos,
+            engineered into a predictive timeline.
           </p>
         </div>
       </footer>

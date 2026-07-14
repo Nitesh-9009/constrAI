@@ -1,8 +1,8 @@
 {
-  "name": "kayakalp",
+  "name": "constrai",
   "version": "1.0.0",
   "private": true,
-  "description": "Kayakalp — Predictive Material Control Tower for Construction",
+  "description": "ConstrAI — AI Material Control Tower for Construction",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -49,7 +49,7 @@ function renderRich(text: string) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((p, i) =>
     p.startsWith("**") && p.endsWith("**") ? (
-      <strong key={i} className="font-semibold text-white">
+      <strong key={i} className="font-semibold text-slate-900">
         {p.slice(2, -2)}
       </strong>
     ) : (
@@ -119,13 +119,14 @@ export function AssistantPanel() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b border-ink-700 px-5 py-4">
-        <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-500/15 text-brand-400">
+      <div className="flex items-center gap-2.5 border-b border-hairline px-5 py-4">
+        <span className="relative grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-800 text-white shadow-glow">
           <Sparkles className="h-4 w-4" />
+          <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 animate-glow-pulse rounded-full bg-success-500 ring-2 ring-white" />
         </span>
         <div>
-          <p className="text-sm font-semibold text-white">Ask Kayakalp</p>
-          <p className="text-xs text-slate-500">Predict → act, grounded in your project</p>
+          <p className="text-sm font-semibold text-slate-900">Ask ConstrAI</p>
+          <p className="text-xs text-slate-400">Predict → act, grounded in your project</p>
         </div>
       </div>
 
@@ -136,8 +137,8 @@ export function AssistantPanel() {
               className={cn(
                 "max-w-[92%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
                 m.role === "user"
-                  ? "bg-brand-500 text-ink-950"
-                  : "border border-ink-700 bg-ink-850/80 text-slate-200"
+                  ? "bg-primary-600 text-white shadow-soft"
+                  : "border border-hairline bg-slate-50 text-slate-700"
               )}
             >
               <p className="whitespace-pre-wrap">{renderRich(m.text)}</p>
@@ -148,14 +149,14 @@ export function AssistantPanel() {
                     className={cn(
                       "chip text-[10px]",
                       m.mode === "llm"
-                        ? "border-brand-500/40 bg-brand-500/10 text-brand-300"
-                        : "border-ink-600 bg-ink-800 text-slate-500"
+                        ? "border-primary-200 bg-primary-50 text-primary-700"
+                        : "border-hairline bg-white text-slate-400"
                     )}
                   >
                     <span
                       className={cn(
                         "h-1.5 w-1.5 rounded-full",
-                        m.mode === "llm" ? "bg-brand-400" : "bg-slate-500"
+                        m.mode === "llm" ? "bg-primary-500" : "bg-slate-400"
                       )}
                     />
                     {m.mode === "llm" ? "AI · Llama-3.3-70B" : "Grounded reasoning"}
@@ -172,7 +173,7 @@ export function AssistantPanel() {
                       <Link
                         key={id}
                         href={`/dashboard/materials/${id}`}
-                        className="chip border-ink-600 bg-ink-800 text-slate-300 hover:border-brand-500 hover:text-brand-300"
+                        className="chip border-hairline bg-white text-slate-600 transition hover:border-primary-300 hover:text-primary-700"
                       >
                         {mat.poNumber} · {mat.name.split("—")[0].trim()}
                         <ArrowRight className="h-3 w-3" />
@@ -195,23 +196,23 @@ export function AssistantPanel() {
                         className={cn(
                           "flex w-full items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left transition",
                           isDone
-                            ? "border-brand-500/40 bg-brand-500/10"
-                            : "border-ink-600 bg-ink-800/60 hover:border-brand-500/60 hover:bg-ink-700/60"
+                            ? "border-success-500/30 bg-success-50"
+                            : "border-hairline bg-white hover:border-primary-300 hover:bg-primary-50/50"
                         )}
                       >
                         <span
                           className={cn(
                             "mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg",
-                            isDone ? "bg-brand-500 text-ink-950" : "bg-ink-700 text-brand-400"
+                            isDone ? "bg-success-500 text-white" : "bg-primary-50 text-primary-600"
                           )}
                         >
                           {isDone ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
                         </span>
                         <span>
-                          <span className="block text-xs font-semibold text-white">
+                          <span className="block text-xs font-semibold text-slate-900">
                             {isDone ? "Approved · queued" : a.label}
                           </span>
-                          <span className="block text-xs text-slate-400">{a.detail}</span>
+                          <span className="block text-xs text-slate-500">{a.detail}</span>
                         </span>
                       </button>
                     );
@@ -224,22 +225,22 @@ export function AssistantPanel() {
 
         {loading && (
           <div className="flex justify-start">
-            <div className="flex items-center gap-2 rounded-2xl border border-ink-700 bg-ink-850/80 px-4 py-3 text-sm text-slate-400">
-              <Loader2 className="h-4 w-4 animate-spin text-brand-400" />
+            <div className="flex items-center gap-2 rounded-2xl border border-hairline bg-slate-50 px-4 py-3 text-sm text-slate-500">
+              <Loader2 className="h-4 w-4 animate-spin text-primary-600" />
               Predicting…
             </div>
           </div>
         )}
       </div>
 
-      <div className="border-t border-ink-700 px-5 py-4">
+      <div className="border-t border-hairline px-5 py-4">
         <div className="mb-3 flex flex-wrap gap-1.5">
           {SUGGESTIONS.map((s) => (
             <button
               key={s}
               onClick={() => ask(s)}
               disabled={loading}
-              className="chip border-ink-600 bg-ink-800/60 text-slate-400 hover:border-brand-500/50 hover:text-brand-300"
+              className="chip border-hairline bg-slate-50 text-slate-500 transition hover:border-primary-300 hover:text-primary-700"
             >
               {s}
             </button>
@@ -256,7 +257,7 @@ export function AssistantPanel() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about any material, PO, or the schedule…"
-            className="flex-1 rounded-xl border border-ink-700 bg-ink-800/70 px-4 py-2.5 text-sm text-slate-200 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none"
+            className="flex-1 rounded-xl border border-hairline bg-slate-50 px-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 transition focus:border-primary-300 focus:bg-white focus:outline-none"
           />
           <button type="submit" disabled={loading || !input.trim()} className="btn-primary px-3">
             <Send className="h-4 w-4" />

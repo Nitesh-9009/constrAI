@@ -39,12 +39,12 @@ export function EtaChart({ material }: { material: Material }) {
         <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: 8 }}>
           <defs>
             <linearGradient id="etaFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#17b483" stopOpacity={0.55} />
-              <stop offset="100%" stopColor="#17b483" stopOpacity={0.03} />
+              <stop offset="0%" stopColor="#2563EB" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="#2563EB" stopOpacity={0.02} />
             </linearGradient>
             <linearGradient id="lateFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#f0506b" stopOpacity={0.5} />
-              <stop offset="100%" stopColor="#f0506b" stopOpacity={0.03} />
+              <stop offset="0%" stopColor="#EF4444" stopOpacity={0.32} />
+              <stop offset="100%" stopColor="#EF4444" stopOpacity={0.02} />
             </linearGradient>
           </defs>
           <XAxis
@@ -52,18 +52,19 @@ export function EtaChart({ material }: { material: Material }) {
             type="number"
             domain={[start, end]}
             tickFormatter={(v) => formatDate(new Date(v).toISOString())}
-            tick={{ fill: "#64748b", fontSize: 11 }}
-            axisLine={{ stroke: "#1c2740" }}
+            tick={{ fill: "#94a3b8", fontSize: 11 }}
+            axisLine={{ stroke: "#e2e8f0" }}
             tickLine={false}
             minTickGap={40}
           />
           <Tooltip
-            cursor={{ stroke: "#3a486a", strokeDasharray: "4 4" }}
+            cursor={{ stroke: "#cbd5e1", strokeDasharray: "4 4" }}
             contentStyle={{
-              background: "#0b1120",
-              border: "1px solid #273451",
+              background: "#ffffff",
+              border: "1px solid rgba(15,23,42,0.08)",
               borderRadius: 12,
               fontSize: 12,
+              boxShadow: "0 10px 28px -14px rgba(16,24,40,0.24)",
             }}
             labelFormatter={(v) => formatDate(new Date(v as number).toISOString(), { weekday: "short" })}
             formatter={() => ["", ""]}
@@ -71,7 +72,7 @@ export function EtaChart({ material }: { material: Material }) {
           <Area
             type="monotone"
             dataKey="density"
-            stroke="#17b483"
+            stroke="#2563EB"
             strokeWidth={2}
             fill="url(#etaFill)"
             isAnimationActive
@@ -79,23 +80,23 @@ export function EtaChart({ material }: { material: Material }) {
           <Area
             type="monotone"
             dataKey="late"
-            stroke="#f0506b"
+            stroke="#EF4444"
             strokeWidth={0}
             fill="url(#lateFill)"
             isAnimationActive
           />
           <ReferenceLine
             x={need}
-            stroke="#f0506b"
+            stroke="#EF4444"
             strokeDasharray="5 4"
             label={{
               value: `Need ${formatDate(material.neededBy)}`,
               position: "insideTopRight",
-              fill: "#f0506b",
+              fill: "#EF4444",
               fontSize: 11,
             }}
           />
-          <ReferenceLine x={p50} stroke="#17b483" strokeDasharray="2 3" />
+          <ReferenceLine x={p50} stroke="#2563EB" strokeDasharray="2 3" />
         </AreaChart>
       </ResponsiveContainer>
     </div>

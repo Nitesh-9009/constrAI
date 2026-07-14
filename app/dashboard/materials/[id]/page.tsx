@@ -23,10 +23,10 @@ export function generateStaticParams() {
 }
 
 const eventTone: Record<string, string> = {
-  info: "bg-slate-500",
-  warn: "bg-risk-med",
-  good: "bg-brand-500",
-  action: "bg-sky-500",
+  info: "bg-slate-400",
+  warn: "bg-warning-500",
+  good: "bg-success-500",
+  action: "bg-primary-500",
 };
 
 export default async function MaterialDetail({
@@ -47,23 +47,24 @@ export default async function MaterialDetail({
     <div className="container-luxe space-y-6 py-6">
       <Link
         href="/dashboard"
-        className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200"
+        className="inline-flex items-center gap-2 text-sm text-slate-500 transition hover:text-slate-900"
       >
         <ArrowLeft className="h-4 w-4" /> Control Tower
       </Link>
 
       {/* Header */}
-      <div className="card p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <div className="card relative overflow-hidden p-6">
+        <div className="grid-lines pointer-events-none absolute inset-0 opacity-50" />
+        <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <RiskBadge risk={risk} />
               <StatusPill status={m.status} />
-              <span className="chip border-ink-600 bg-ink-800 font-mono text-slate-400">
+              <span className="chip border-hairline bg-slate-50 font-mono text-slate-500">
                 {m.poNumber}
               </span>
             </div>
-            <h1 className="mt-3 text-2xl font-semibold tracking-tight text-white">{m.name}</h1>
+            <h1 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">{m.name}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
               <span className="flex items-center gap-1.5">
                 <Boxes className="h-4 w-4" /> {m.qty} {m.unit}
@@ -78,15 +79,15 @@ export default async function MaterialDetail({
           </div>
 
           <div className="flex shrink-0 flex-col items-start gap-2 md:items-end">
-            <div className="text-left md:text-right">
+            <div className="rounded-2xl border border-hairline bg-slate-50 px-5 py-3 text-left md:text-right">
               <p className="label-muted">On-time probability</p>
               <p
                 className={`text-3xl font-semibold tabular-nums ${
                   risk === "high"
-                    ? "text-risk-high"
+                    ? "text-danger-600"
                     : risk === "medium"
-                    ? "text-risk-med"
-                    : "text-risk-low"
+                    ? "text-warning-600"
+                    : "text-success-600"
                 }`}
               >
                 {pct(m.onTimeProbability)}
@@ -101,10 +102,10 @@ export default async function MaterialDetail({
         <div className="space-y-6 lg:col-span-2">
           <div className="card p-5">
             <div className="mb-2 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-white">
+              <h2 className="text-sm font-semibold text-slate-900">
                 Probabilistic arrival forecast
               </h2>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-slate-400">
                 Chronos + conformal · calibrated interval
               </span>
             </div>
@@ -119,26 +120,26 @@ export default async function MaterialDetail({
 
           {/* Timeline */}
           <div className="card p-5">
-            <h2 className="mb-4 text-sm font-semibold text-white">
+            <h2 className="mb-4 text-sm font-semibold text-slate-900">
               Fused timeline — every signal, one thread
             </h2>
-            <ol className="relative space-y-5 border-l border-ink-700 pl-6">
+            <ol className="relative space-y-5 border-l border-hairline pl-6">
               {m.timeline.map((e, i) => (
                 <li key={i} className="relative">
                   <span
-                    className={`absolute -left-[27px] top-1 h-3 w-3 rounded-full ring-4 ring-ink-950 ${
+                    className={`absolute -left-[27px] top-1 h-3 w-3 rounded-full ring-4 ring-white ${
                       eventTone[e.kind]
                     }`}
                   />
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium text-white">{e.label}</p>
-                    <time className="shrink-0 text-xs text-slate-500">
+                    <p className="text-sm font-medium text-slate-900">{e.label}</p>
+                    <time className="shrink-0 text-xs text-slate-400">
                       {formatDate(e.date, { year: "numeric" })}
                     </time>
                   </div>
-                  {e.detail && <p className="mt-1 text-sm text-slate-400">{e.detail}</p>}
+                  {e.detail && <p className="mt-1 text-sm text-slate-500">{e.detail}</p>}
                   {e.source && (
-                    <p className="mt-1 text-[11px] uppercase tracking-wide text-slate-600">
+                    <p className="mt-1 text-[11px] uppercase tracking-wide text-slate-400">
                       {e.source}
                     </p>
                   )}
@@ -153,20 +154,20 @@ export default async function MaterialDetail({
         {/* Right: facts + actions */}
         <div className="space-y-6">
           <div className="card p-5">
-            <h2 className="mb-3 text-sm font-semibold text-white">Supplier</h2>
+            <h2 className="mb-3 text-sm font-semibold text-slate-900">Supplier</h2>
             <div className="flex items-center gap-3">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-ink-800 text-slate-400">
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100 text-slate-500">
                 <Building2 className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-sm font-medium text-white">{sup.name}</p>
-                <p className="text-xs text-slate-500">{sup.location}</p>
+                <p className="text-sm font-medium text-slate-900">{sup.name}</p>
+                <p className="text-xs text-slate-400">{sup.location}</p>
               </div>
             </div>
             <div className="mt-4 space-y-3">
               <FactRow label="On-time history" value={pct(sup.onTimeRate)} />
               <div>
-                <div className="mb-1 flex justify-between text-xs text-slate-500">
+                <div className="mb-1 flex justify-between text-xs text-slate-400">
                   <span>Reliability</span>
                   <span>{pct(sup.reliability)}</span>
                 </div>
@@ -180,9 +181,9 @@ export default async function MaterialDetail({
           </div>
 
           <div className="card p-5">
-            <h2 className="mb-3 text-sm font-semibold text-white">Schedule link</h2>
-            <div className="flex items-center gap-2 text-sm text-slate-300">
-              <CalendarClock className="h-4 w-4 text-slate-500" />
+            <h2 className="mb-3 text-sm font-semibold text-slate-900">Schedule link</h2>
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <CalendarClock className="h-4 w-4 text-slate-400" />
               {task.name}
             </div>
             <div className="mt-3 space-y-2">
@@ -199,7 +200,7 @@ export default async function MaterialDetail({
 
           {/* Agent actions */}
           <div className="card p-5">
-            <h2 className="mb-3 text-sm font-semibold text-white">Agent — recommended actions</h2>
+            <h2 className="mb-3 text-sm font-semibold text-slate-900">Agent — recommended actions</h2>
             <div className="space-y-2">
               {m.onTimeProbability < 0.6 && (
                 <ActionItem
@@ -233,7 +234,7 @@ export default async function MaterialDetail({
                 m.criticalPathSlipDays === 0 &&
                 m.status !== "in_transit" && (
                   <p className="text-sm text-slate-500">
-                    On track — no action needed. Kayakalp keeps monitoring the ETA.
+                    On track — no action needed. ConstrAI keeps monitoring the ETA.
                   </p>
                 )}
             </div>
@@ -245,9 +246,9 @@ export default async function MaterialDetail({
 }
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: "brand" | "risk" }) {
-  const t = tone === "brand" ? "text-brand-300" : tone === "risk" ? "text-risk-high" : "text-white";
+  const t = tone === "brand" ? "text-primary-700" : tone === "risk" ? "text-danger-600" : "text-slate-900";
   return (
-    <div className="rounded-xl border border-ink-700 bg-ink-850/50 p-2.5">
+    <div className="rounded-xl border border-hairline bg-slate-50 p-2.5">
       <p className="label-muted">{label}</p>
       <p className={`mt-1 text-sm font-semibold ${t}`}>{value}</p>
     </div>
@@ -257,8 +258,8 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "br
 function FactRow({ label, value, tone }: { label: string; value: string; tone?: "risk" }) {
   return (
     <div className="flex items-center justify-between text-sm">
-      <span className="text-slate-500">{label}</span>
-      <span className={tone === "risk" ? "font-medium text-risk-high" : "font-medium text-slate-200"}>
+      <span className="text-slate-400">{label}</span>
+      <span className={tone === "risk" ? "font-medium text-danger-600" : "font-medium text-slate-700"}>
         {value}
       </span>
     </div>
@@ -275,13 +276,13 @@ function ActionItem({
   detail: string;
 }) {
   return (
-    <div className="flex items-start gap-2.5 rounded-xl border border-ink-600 bg-ink-800/50 px-3 py-2.5">
-      <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-ink-700 text-brand-400">
+    <div className="flex items-start gap-2.5 rounded-xl border border-hairline bg-slate-50 px-3 py-2.5">
+      <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary-50 text-primary-600">
         <Icon className="h-3.5 w-3.5" />
       </span>
       <div>
-        <p className="text-xs font-semibold text-white">{title}</p>
-        <p className="text-xs text-slate-400">{detail}</p>
+        <p className="text-xs font-semibold text-slate-900">{title}</p>
+        <p className="text-xs text-slate-500">{detail}</p>
       </div>
     </div>
   );

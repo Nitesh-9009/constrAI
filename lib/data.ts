@@ -4,7 +4,7 @@ export const PROJECT = {
   name: "Meridian Tower — Phase 2",
   code: "MTR-P2",
   location: "Austin, TX",
-  gc: "Kayakalp Demo — Vertex Construction",
+  gc: "ConstrAI Demo — Vertex Construction",
   today: "2026-07-11",
 };
 

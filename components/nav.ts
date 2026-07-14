@@ -11,6 +11,7 @@ export interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  section?: string;
 }
 
 export const navItems: NavItem[] = [

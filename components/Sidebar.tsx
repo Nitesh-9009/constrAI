@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings, ArrowUpRight } from "lucide-react";
+import { Settings, ArrowUpRight, ShieldCheck } from "lucide-react";
 import { Logo } from "./ui";
 import { navItems } from "./nav";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ export function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
     <nav className="flex-1 space-y-1 px-3" aria-label="Primary">
+      <p className="px-3 pb-1.5 pt-2 label-muted">Workspace</p>
       {navItems.map((item) => {
         const active = item.href === "/dashboard" && pathname === "/dashboard";
         const Icon = item.icon;
@@ -22,13 +23,22 @@ export function NavList({ onNavigate }: { onNavigate?: () => void }) {
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
+              "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
               active
-                ? "bg-brand-500/10 text-brand-300"
-                : "text-slate-400 hover:bg-ink-800/60 hover:text-slate-200"
+                ? "bg-primary-50 text-primary-700 shadow-inset-soft"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
             )}
           >
-            <Icon className="h-5 w-5" strokeWidth={1.8} />
+            {active && (
+              <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-primary-600" />
+            )}
+            <Icon
+              className={cn(
+                "h-5 w-5 transition-colors",
+                active ? "text-primary-600" : "text-slate-400 group-hover:text-slate-600"
+              )}
+              strokeWidth={1.8}
+            />
             {item.label}
           </Link>
         );
@@ -39,9 +49,14 @@ export function NavList({ onNavigate }: { onNavigate?: () => void }) {
 
 export function ProjectCard() {
   return (
-    <div className="mx-4 mb-4 rounded-xl border border-ink-700 bg-ink-850/60 p-3">
-      <p className="label-muted">Active project</p>
-      <p className="mt-1 text-sm font-semibold text-white">{PROJECT.name}</p>
+    <div className="mx-4 mb-4 rounded-2xl border border-hairline bg-gradient-to-br from-primary-50 to-white p-3.5 shadow-soft">
+      <div className="flex items-center gap-2">
+        <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary-600 text-white shadow-soft">
+          <ShieldCheck className="h-4 w-4" />
+        </span>
+        <p className="label-muted text-primary-700/70">Active project</p>
+      </div>
+      <p className="mt-2 text-sm font-semibold text-slate-900">{PROJECT.name}</p>
       <p className="text-xs text-slate-500">
         {PROJECT.location} · {PROJECT.code}
       </p>
@@ -55,28 +70,35 @@ export function SidebarFooter({ onNavigate }: { onNavigate?: () => void }) {
       <Link
         href="/dashboard#settings"
         onClick={onNavigate}
-        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-ink-800/60 hover:text-slate-200"
+        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
       >
-        <Settings className="h-5 w-5" strokeWidth={1.8} />
+        <Settings className="h-5 w-5 text-slate-400" strokeWidth={1.8} />
         Settings
       </Link>
       <Link
         href="/"
         onClick={onNavigate}
-        className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-300"
+        className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:text-slate-700"
       >
         Back to site
         <ArrowUpRight className="h-4 w-4" />
       </Link>
+      <div className="mt-2 flex items-center gap-2 rounded-xl border border-hairline bg-slate-50 px-3 py-2">
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success-500/60" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-success-500" />
+        </span>
+        <span className="text-[11px] font-medium text-slate-500">Encrypted · SOC 2 secured</span>
+      </div>
     </div>
   );
 }
 
 export function Sidebar() {
   return (
-    <aside className="hidden w-64 shrink-0 flex-col border-r border-ink-700 bg-ink-900/60 lg:sticky lg:top-0 lg:flex lg:h-screen lg:overflow-y-auto">
+    <aside className="hidden w-64 shrink-0 flex-col border-r border-hairline bg-white/80 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:overflow-y-auto">
       <div className="px-5 py-5">
-        <Link href="/" aria-label="Kayakalp home">
+        <Link href="/" aria-label="ConstrAI home">
           <Logo />
         </Link>
       </div>

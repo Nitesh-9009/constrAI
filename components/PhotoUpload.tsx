@@ -33,14 +33,14 @@ export function PhotoUpload() {
 
   return (
     <div className="card overflow-hidden">
-      <div className="border-b border-ink-700 px-5 py-4">
-        <div className="flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-500/15 text-brand-400">
+      <div className="border-b border-hairline px-5 py-4">
+        <div className="flex items-center gap-2.5">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary-50 text-primary-600">
             <Camera className="h-4 w-4" />
           </span>
           <div>
-            <p className="text-sm font-semibold text-white">Update by photo</p>
-            <p className="text-xs text-slate-500">No forms — the VLM reads the site</p>
+            <p className="text-sm font-semibold text-slate-900">Update by photo</p>
+            <p className="text-xs text-slate-400">No forms — the VLM reads the site</p>
           </div>
         </div>
       </div>
@@ -49,15 +49,15 @@ export function PhotoUpload() {
         {state === "idle" && (
           <button
             onClick={run}
-            className="grid w-full place-items-center gap-3 rounded-xl border border-dashed border-ink-600 bg-ink-850/40 py-8 text-center transition hover:border-brand-500/50 hover:bg-ink-800/40"
+            className="grid w-full place-items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 py-8 text-center transition hover:border-primary-400 hover:bg-primary-50/50"
           >
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-ink-800 text-brand-400">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-primary-50 text-primary-600">
               <ScanLine className="h-6 w-6" />
             </span>
-            <span className="text-sm font-medium text-slate-300">
+            <span className="text-sm font-medium text-slate-700">
               Drop a fab-shop photo to auto-update status
             </span>
-            <span className="text-xs text-slate-500">Tap to simulate — rebar bay, Level 3</span>
+            <span className="text-xs text-slate-400">Tap to simulate — rebar bay, Level 3</span>
           </button>
         )}
 
@@ -68,15 +68,15 @@ export function PhotoUpload() {
                 key={s}
                 className={cn(
                   "flex items-center gap-3 text-sm transition",
-                  i < step ? "text-brand-300" : i === step ? "text-white" : "text-slate-600"
+                  i < step ? "text-primary-700" : i === step ? "text-slate-900" : "text-slate-300"
                 )}
               >
                 {i < step ? (
-                  <Check className="h-4 w-4 text-brand-400" />
+                  <Check className="h-4 w-4 text-primary-600" />
                 ) : i === step ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-brand-400" />
+                  <Loader2 className="h-4 w-4 animate-spin text-primary-600" />
                 ) : (
-                  <span className="h-4 w-4 rounded-full border border-ink-600" />
+                  <span className="h-4 w-4 rounded-full border border-slate-300" />
                 )}
                 {s}
               </div>
@@ -86,20 +86,20 @@ export function PhotoUpload() {
 
         {state === "done" && (
           <div className="animate-fade-up space-y-3">
-            <div className="rounded-xl border border-brand-500/30 bg-brand-500/5 p-4">
-              <p className="text-sm font-medium text-white">
-                #8 Rebar — Level 3 · <span className="text-brand-300">60% fabricated</span>
+            <div className="rounded-xl border border-primary-200 bg-primary-50/60 p-4">
+              <p className="text-sm font-medium text-slate-900">
+                #8 Rebar — Level 3 · <span className="text-primary-700">60% fabricated</span>
               </p>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-slate-500">
                 VLM counted 11 of 18.4 tons bent & tagged. Status auto-updated to{" "}
-                <span className="text-amber-300">fabricating</span> and written to the graph.
+                <span className="font-medium text-warning-700">fabricating</span> and written to the graph.
               </p>
             </div>
-            <div className="flex items-start gap-2 rounded-xl border border-risk-high/30 bg-risk-high/5 p-4">
-              <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-risk-high" />
-              <p className="text-xs text-slate-300">
-                <span className="font-semibold text-risk-high">Spec mismatch flagged:</span> 2
-                bundles show wrong bar mark vs detail S-204. Kayakalp opened an RFI draft for the
+            <div className="flex items-start gap-2 rounded-xl border border-danger-500/20 bg-danger-50/60 p-4">
+              <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-danger-500" />
+              <p className="text-xs text-slate-600">
+                <span className="font-semibold text-danger-700">Spec mismatch flagged:</span> 2
+                bundles show wrong bar mark vs detail S-204. ConstrAI opened an RFI draft for the
                 foreman to approve.
               </p>
             </div>

@@ -1,17 +1,24 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kayakalp-nine.vercel.app";
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans",
+});
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://constrai.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Kayakalp — Predictive Material Control Tower",
-    template: "%s · Kayakalp",
+    default: "ConstrAI — AI Material Control Tower for Construction",
+    template: "%s · ConstrAI",
   },
   description:
-    "Kayakalp fuses POs, submittals, drawings and job-site photos into one live, predictive material timeline — and acts to prevent construction delays before they cascade.",
-  applicationName: "Kayakalp",
+    "ConstrAI fuses POs, submittals, drawings and job-site photos into one live, predictive material timeline — and acts to prevent construction delays before they cascade.",
+  applicationName: "ConstrAI",
   keywords: [
     "construction",
     "supply chain",
@@ -19,25 +26,26 @@ export const metadata: Metadata = {
     "AI",
     "control tower",
     "procurement",
+    "ConTech",
   ],
   openGraph: {
-    title: "Kayakalp — Predictive Material Control Tower",
+    title: "ConstrAI — AI Material Control Tower for Construction",
     description:
       "Will the material be here when the crew needs it — and if not, what do we do right now?",
     url: siteUrl,
-    siteName: "Kayakalp",
+    siteName: "ConstrAI",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Kayakalp — Predictive Material Control Tower",
+    title: "ConstrAI — AI Material Control Tower for Construction",
     description:
       "Will the material be here when the crew needs it — and if not, what do we do right now?",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b1120",
+  themeColor: "#F7F9FC",
   width: "device-width",
   initialScale: 1,
 };
@@ -46,8 +54,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen bg-ink-950 text-slate-200 antialiased">
+    <html lang="en" className={inter.variable}>
+      <body className="min-h-screen bg-canvas font-sans text-slate-700 antialiased">
         {children}
       </body>
     </html>

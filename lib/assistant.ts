@@ -146,7 +146,7 @@ export function answerLocally(question: string): AssistantAnswer {
     return {
       answer: `**${safe.length}** materials are on track: ${safe
         .map((m) => m.name)
-        .join(", ")}. No action needed — Kayakalp is monitoring their ETAs continuously.`,
+        .join(", ")}. No action needed — ConstrAI is monitoring their ETAs continuously.`,
       materialIds: safe.map((m) => m.id),
       actions: [],
       confidence: 0.75,
@@ -193,7 +193,7 @@ export function buildSystemPrompt(): string {
       return `- ${m.name} | ${m.poNumber} | status ${m.status} ${m.fabricationProgress}% | need ${m.neededBy} | ETA p50 ${m.eta.p50} | on-time ${(m.onTimeProbability * 100).toFixed(0)}% | slip ${m.criticalPathSlipDays}d | $${m.costOfDelayPerDay}/day | supplier ${sup.name} (${(sup.onTimeRate * 100).toFixed(0)}% on-time) | task ${m.linkedTaskId} | ${m.flags?.join("; ") ?? ""}`;
     })
     .join("\n");
-  return `You are Kayakalp, a predictive material control tower for the construction project "${PROJECT.name}" (${PROJECT.location}). Today is ${PROJECT.today}.
+  return `You are ConstrAI, a predictive material control tower for the construction project "${PROJECT.name}" (${PROJECT.location}). Today is ${PROJECT.today}.
 Answer procurement/schedule questions concisely and specifically using ONLY the material data below. Always ground answers in PO numbers, dates, on-time probabilities, and critical-path slip. When a material threatens the schedule, recommend a concrete action (draft escalation, re-sequence a task, reorder, or flag a submittal). Never invent materials, suppliers, or dates not present here.
 
 MATERIAL DATA:
