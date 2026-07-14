@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+}
+
+@layer base {
+  * {
+    border-color: theme("colors.ink.700");
+  }
+  body {
+    background-image:
+      radial-gradient(60rem 60rem at 80% -10%, rgba(23, 180, 131, 0.08), transparent 60%),
+      radial-gradient(50rem 50rem at -10% 20%, rgba(59, 130, 246, 0.06), transparent 55%);
+    background-attachment: fixed;
+  }
+  ::selection {
+    background: rgba(23, 180, 131, 0.35);
+  }
+  :focus-visible {
+    outline: 2px solid theme("colors.brand.400");
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  .container-luxe {
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-8;
+  }
+  .card {
+    @apply rounded-2xl border border-ink-700/80 bg-ink-900/70 shadow-card backdrop-blur-sm;
+  }
+  .card-hover {
+    @apply transition duration-200 hover:border-ink-600 hover:bg-ink-850/80;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-brand-500 text-ink-950 hover:bg-brand-400 shadow-glow;
+  }
+  .btn-ghost {
+    @apply btn border border-ink-700 bg-ink-800/60 text-slate-200 hover:border-ink-500 hover:bg-ink-700/60;
+  }
+  .label-muted {
+    @apply text-xs uppercase tracking-[0.14em] text-slate-500;
+  }
+  .grid-lines {
+    background-image:
+      linear-gradient(to right, rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: theme("colors.ink.700");
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: theme("colors.ink.600");
+  background-clip: padding-box;
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
