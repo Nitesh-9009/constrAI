@@ -22,6 +22,7 @@ import {
 import { materials, supplierById, PROJECT } from "@/lib/data";
 import { cn, formatDate } from "@/lib/utils";
 import { simpleOf, latenessText } from "@/lib/plain";
+import { supabaseConfigured } from "@/lib/supabase/config";
 import { Logo, SimpleBadge } from "./ui";
 import { NavList, ProjectCard, SidebarFooter } from "./Sidebar";
 
@@ -375,13 +376,24 @@ function AccountMenu() {
           >
             <MessageCircleQuestion className="h-4 w-4 text-slate-400" /> Ask for help
           </Link>
-          <Link
-            href="/"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 border-t border-hairline px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
-          >
-            <LogOut className="h-4 w-4 text-slate-400" /> Home page
-          </Link>
+          {supabaseConfigured ? (
+            <form action="/auth/signout" method="post" className="border-t border-hairline">
+              <button
+                type="submit"
+                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+              >
+                <LogOut className="h-4 w-4 text-slate-400" /> Log out
+              </button>
+            </form>
+          ) : (
+            <Link
+              href="/"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 border-t border-hairline px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
+            >
+              <LogOut className="h-4 w-4 text-slate-400" /> Home page
+            </Link>
+          )}
         </div>
       )}
     </div>

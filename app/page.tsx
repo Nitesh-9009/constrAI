@@ -12,8 +12,12 @@ import {
   Github,
 } from "lucide-react";
 import { Logo } from "@/components/ui";
+import { supabaseConfigured } from "@/lib/supabase/config";
 
 export default function Home() {
+  const ctaHref = supabaseConfigured ? "/signup" : "/dashboard";
+  const ctaLabel = supabaseConfigured ? "Get started free" : "Open my dashboard";
+
   return (
     <div className="relative overflow-hidden">
       {/* Nav */}
@@ -34,8 +38,16 @@ export default function Home() {
             >
               <Github className="h-5 w-5" />
             </a>
-            <Link href="/dashboard" className="btn-primary text-sm">
-              Open my dashboard <ArrowRight className="h-4 w-4" />
+            {supabaseConfigured && (
+              <Link
+                href="/login"
+                className="hidden text-sm font-medium text-slate-600 transition hover:text-slate-900 sm:block"
+              >
+                Log in
+              </Link>
+            )}
+            <Link href={ctaHref} className="btn-primary text-sm">
+              {ctaLabel} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
@@ -66,8 +78,8 @@ export default function Home() {
               No paperwork. No guessing. So your crew is never left standing around waiting.
             </p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link href="/dashboard" className="btn-primary">
-                Open my dashboard <ArrowRight className="h-4 w-4" />
+              <Link href={ctaHref} className="btn-primary">
+                {ctaLabel} <ArrowRight className="h-4 w-4" />
               </Link>
               <a href="#how" className="btn-ghost">
                 See how it helps
@@ -319,8 +331,8 @@ export default function Home() {
                 Open your dashboard, see what is late, and get one clear thing to do next.
               </p>
               <div className="mt-7 flex justify-center">
-                <Link href="/dashboard" className="btn-primary">
-                  Open my dashboard <ArrowRight className="h-4 w-4" />
+                <Link href={ctaHref} className="btn-primary">
+                  {ctaLabel} <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
             </div>
