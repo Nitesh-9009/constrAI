@@ -28,6 +28,8 @@ export type MaterialVM = {
   paperwork: Paperwork;
   notes: string | null;
   supplier: SupplierVM | null;
+  projectId: string | null;
+  projectName: string | null;
   createdAt?: string;
 };
 
@@ -72,6 +74,8 @@ export function demoToVM(m: Material): MaterialVM {
           avgLeadDays: sup.avgLeadDays,
         }
       : null,
+    projectId: null,
+    projectName: DEMO_ORG.projectName,
   };
 }
 
@@ -88,7 +92,11 @@ const supRowToVM = (s: SupplierRow): SupplierVM => ({
 });
 
 /** Map a database material row (+ its supplier) to the view model. */
-export function rowToVM(row: MaterialRow, sup: SupplierRow | null): MaterialVM {
+export function rowToVM(
+  row: MaterialRow,
+  sup: SupplierRow | null,
+  projectName: string | null = null
+): MaterialVM {
   return {
     id: row.id,
     name: row.name,
@@ -104,6 +112,8 @@ export function rowToVM(row: MaterialRow, sup: SupplierRow | null): MaterialVM {
     paperwork: asPaperwork(row.paperwork),
     notes: row.notes,
     supplier: sup ? supRowToVM(sup) : null,
+    projectId: row.project_id,
+    projectName,
     createdAt: row.created_at,
   };
 }

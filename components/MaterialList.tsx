@@ -96,8 +96,12 @@ export function MaterialList({
                     )}
                     <span>{m.needBy ? `You need it by ${formatDate(m.needBy)}` : "No date set"}</span>
                   </div>
-                  {m.supplier && (
-                    <p className="mt-1 text-xs text-slate-400">Made by {m.supplier.name}</p>
+                  {(m.supplier || m.projectName) && (
+                    <p className="mt-1 text-xs text-slate-400">
+                      {m.supplier ? `Made by ${m.supplier.name}` : ""}
+                      {m.supplier && m.projectName ? " · " : ""}
+                      {m.projectName ?? ""}
+                    </p>
                   )}
                 </div>
 

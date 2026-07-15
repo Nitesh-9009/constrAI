@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { MaterialForm } from "@/components/MaterialForm";
-import { getMaterial, getSuppliers } from "@/lib/queries";
+import { getMaterial, getSuppliers, getProjects } from "@/lib/queries";
 import { updateMaterial, deleteMaterial } from "@/lib/actions/materials";
 
 export const metadata = { title: "Edit material" };
@@ -13,7 +13,11 @@ export default async function EditMaterialPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [material, suppliers] = await Promise.all([getMaterial(id), getSuppliers()]);
+  const [material, suppliers, projects] = await Promise.all([
+    getMaterial(id),
+    getSuppliers(),
+    getProjects(),
+  ]);
   if (!material) notFound();
 
   const updateAction = updateMaterial.bind(null, id);
@@ -43,6 +47,7 @@ export default async function EditMaterialPage({
       <MaterialForm
         action={updateAction}
         suppliers={suppliers}
+        projects={projects}
         defaults={material}
         submitLabel="Save changes"
       />

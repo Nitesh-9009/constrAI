@@ -1,4 +1,5 @@
 import "server-only";
+import { cookies } from "next/headers";
 import { createClient } from "./supabase/server";
 import { supabaseConfigured } from "./supabase/config";
 import {
@@ -12,17 +13,37 @@ import {
 } from "./materials";
 import type { MaterialRow, SupplierRow } from "./database.types";
 
-/** All materials for the signed-in user's org (or demo data when not configured). */
+export const ACTIVE_PROJECT_COOKIE = "constrai_project";
+
+/** The project the user is currently viewing (null = all projects). */
+export async function getActiveProjectId(): Promise<string | null> {
+  const store = await cookies();
+  const v = store.get(ACTIVE_PROJECT_COOKIE)?.value;
+  return v && v !== "all" ? v : null;
+}
+
+/** All materials for the signed-in user's org, filtered to the active project. */
 export async function getMaterials(): Promise<MaterialVM[]> {
   if (!supabaseConfigured) return demoVMs();
   const supabase = await createClient();
-  const [{ data: mats }, { data: sups }] = await Promise.all([
-    supabase.from("materials").select("*").order("created_at", { ascending: true }),
+  const activeProject = await getActiveProjectId();
+
+  let query = supabase.from("materials").select("*").order("created_at", { ascending: true });
+  if (activeProject) query = query.eq("project_id", activeProject);
+
+  const [{ data: mats }, { data: sups }, { data: projs }] = await Promise.all([
+    query,
     supabase.from("suppliers").select("*"),
+    supabase.from("projects").select("id, name"),
   ]);
   const supMap = new Map((sups ?? []).map((s: SupplierRow) => [s.id, s]));
+  const projMap = new Map((projs ?? []).map((p) => [p.id, p.name]));
   return (mats ?? []).map((m: MaterialRow) =>
-    rowToVM(m, m.supplier_id ? supMap.get(m.supplier_id) ?? null : null)
+    rowToVM(
+      m,
+      m.supplier_id ? supMap.get(m.supplier_id) ?? null : null,
+      m.project_id ? projMap.get(m.project_id) ?? null : null
+    )
   );
 }
 
@@ -38,7 +59,12 @@ export async function getMaterial(id: string): Promise<MaterialVM | null> {
     const { data } = await supabase.from("suppliers").select("*").eq("id", row.supplier_id).maybeSingle();
     sup = data ?? null;
   }
-  return rowToVM(row, sup);
+  let projectName: string | null = null;
+  if (row.project_id) {
+    const { data } = await supabase.from("projects").select("name").eq("id", row.project_id).maybeSingle();
+    projectName = data?.name ?? null;
+  }
+  return rowToVM(row, sup, projectName);
 }
 
 export async function getSuppliers(): Promise<SupplierVM[]> {
@@ -146,13 +172,38 @@ export async function getTeam(): Promise<TeamData> {
 export async function getOrgInfo(): Promise<OrgInfo> {
   if (!supabaseConfigured) return DEMO_ORG;
   const supabase = await createClient();
-  const [{ data: orgs }, { data: projects }] = await Promise.all([
-    supabase.from("orgs").select("name").limit(1),
-    supabase.from("projects").select("name, location").order("created_at").limit(1),
-  ]);
+  const activeProject = await getActiveProjectId();
+
+  const { data: orgs } = await supabase.from("orgs").select("name").limit(1);
+  const companyName = orgs?.[0]?.name ?? "My Company";
+
+  if (activeProject) {
+    const { data: p } = await supabase
+      .from("projects")
+      .select("name, location")
+      .eq("id", activeProject)
+      .maybeSingle();
+    if (p) {
+      return { companyName, projectName: p.name, projectLocation: p.location ?? "" };
+    }
+  }
+
+  // No project selected → show "All projects".
+  const { count } = await supabase
+    .from("projects")
+    .select("id", { count: "exact", head: true });
+  const { data: first } = await supabase
+    .from("projects")
+    .select("name, location")
+    .order("created_at")
+    .limit(1);
+
+  if ((count ?? 0) > 1) {
+    return { companyName, projectName: "All projects", projectLocation: "" };
+  }
   return {
-    companyName: orgs?.[0]?.name ?? "My Company",
-    projectName: projects?.[0]?.name ?? "My Project",
-    projectLocation: projects?.[0]?.location ?? "",
+    companyName,
+    projectName: first?.[0]?.name ?? "My Project",
+    projectLocation: first?.[0]?.location ?? "",
   };
 }

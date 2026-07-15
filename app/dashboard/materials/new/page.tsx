@@ -1,13 +1,17 @@
 import Link from "next/link";
 import { ArrowLeft, Plus } from "lucide-react";
 import { MaterialForm } from "@/components/MaterialForm";
-import { getSuppliers } from "@/lib/queries";
+import { getSuppliers, getProjects, getActiveProjectId } from "@/lib/queries";
 import { createMaterial } from "@/lib/actions/materials";
 
 export const metadata = { title: "Add material" };
 
 export default async function NewMaterialPage() {
-  const suppliers = await getSuppliers();
+  const [suppliers, projects, activeProjectId] = await Promise.all([
+    getSuppliers(),
+    getProjects(),
+    getActiveProjectId(),
+  ]);
 
   return (
     <div className="container-luxe max-w-2xl space-y-6 py-6">
@@ -30,7 +34,13 @@ export default async function NewMaterialPage() {
         </div>
       </div>
 
-      <MaterialForm action={createMaterial} suppliers={suppliers} submitLabel="Add material" />
+      <MaterialForm
+        action={createMaterial}
+        suppliers={suppliers}
+        projects={projects}
+        defaultProjectId={activeProjectId}
+        submitLabel="Add material"
+      />
     </div>
   );
 }

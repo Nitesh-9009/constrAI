@@ -41,6 +41,7 @@ function readForm(fd: FormData) {
     qty: num("qty", 1),
     status: str("status") || "ordered",
     supplier_id: str("supplier_id") || null,
+    project_id: str("project_id") || null,
     need_by,
     expected_arrival,
     paperwork: str("paperwork") || "approved",

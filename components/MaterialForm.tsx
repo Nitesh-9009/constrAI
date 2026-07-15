@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Loader2, Save } from "lucide-react";
 import type { MaterialVM, SupplierVM } from "@/lib/materials";
+import type { ProjectVM } from "@/lib/queries";
 import { isRedirectError } from "@/lib/utils";
 
 const STATUS_OPTIONS = [
@@ -24,11 +25,15 @@ const PAPER_OPTIONS = [
 export function MaterialForm({
   action,
   suppliers,
+  projects,
+  defaultProjectId,
   defaults,
   submitLabel = "Save",
 }: {
   action: (fd: FormData) => void | Promise<void>;
   suppliers: SupplierVM[];
+  projects: ProjectVM[];
+  defaultProjectId?: string | null;
   defaults?: MaterialVM;
   submitLabel?: string;
 }) {
@@ -76,17 +81,34 @@ export function MaterialForm({
           </div>
         </Field>
 
-        <Field label="Who is making it?">
-          <select name="supplier_id" defaultValue={defaults?.supplier?.id ?? ""} className={inputCls}>
-            <option value="">— Choose a supplier —</option>
-            {suppliers.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
+        <Field label="Which project?">
+          <select
+            name="project_id"
+            defaultValue={defaults?.projectId ?? defaultProjectId ?? ""}
+            className={inputCls}
+          >
+            <option value="">— No project —</option>
+            {projects
+              .filter((p) => p.id !== "demo")
+              .map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
           </select>
         </Field>
       </div>
+
+      <Field label="Who is making it?">
+        <select name="supplier_id" defaultValue={defaults?.supplier?.id ?? ""} className={inputCls}>
+          <option value="">— Choose a supplier —</option>
+          {suppliers.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+      </Field>
 
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="When do you need it?">
