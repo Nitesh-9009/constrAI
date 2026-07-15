@@ -13,7 +13,6 @@ import {
   ArrowRight,
   Check,
 } from "lucide-react";
-import { materialById } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 interface Action {
@@ -22,10 +21,14 @@ interface Action {
   kind: "escalate" | "resequence" | "reorder" | "flag";
   detail: string;
 }
+interface MaterialLink {
+  id: string;
+  name: string;
+}
 interface Msg {
   role: "user" | "assistant";
   text: string;
-  materialIds?: string[];
+  materialLinks?: MaterialLink[];
   actions?: Action[];
   mode?: string;
 }
@@ -95,7 +98,7 @@ export function AssistantPanel() {
         {
           role: "assistant",
           text: data.answer ?? "Sorry, I couldn't process that.",
-          materialIds: data.materialIds,
+          materialLinks: data.materialLinks,
           actions: data.actions,
           mode: data.mode,
         },
@@ -148,7 +151,7 @@ export function AssistantPanel() {
                   <span
                     className={cn(
                       "chip text-[10px]",
-                      m.mode === "llm"
+                      m.mode === "ai"
                         ? "border-primary-200 bg-primary-50 text-primary-700"
                         : "border-hairline bg-white text-slate-400"
                     )}
@@ -156,30 +159,26 @@ export function AssistantPanel() {
                     <span
                       className={cn(
                         "h-1.5 w-1.5 rounded-full",
-                        m.mode === "llm" ? "bg-primary-500" : "bg-slate-400"
+                        m.mode === "ai" ? "bg-primary-500" : "bg-slate-400"
                       )}
                     />
-                    {m.mode === "llm" ? "Smart answer" : "Answer"}
+                    {m.mode === "ai" ? "AI answer" : "Answer"}
                   </span>
                 </div>
               )}
 
-              {m.materialIds && m.materialIds.length > 0 && (
+              {m.materialLinks && m.materialLinks.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1.5">
-                  {m.materialIds.map((id) => {
-                    const mat = materialById(id);
-                    if (!mat) return null;
-                    return (
-                      <Link
-                        key={id}
-                        href={`/dashboard/materials/${id}`}
-                        className="chip border-hairline bg-white text-slate-600 transition hover:border-primary-300 hover:text-primary-700"
-                      >
-                        {mat.name.split("—")[0].trim()}
-                        <ArrowRight className="h-3 w-3" />
-                      </Link>
-                    );
-                  })}
+                  {m.materialLinks.map((mat) => (
+                    <Link
+                      key={mat.id}
+                      href={`/dashboard/materials/${mat.id}`}
+                      className="chip border-hairline bg-white text-slate-600 transition hover:border-primary-300 hover:text-primary-700"
+                    >
+                      {mat.name.split("—")[0].trim()}
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  ))}
                 </div>
               )}
 

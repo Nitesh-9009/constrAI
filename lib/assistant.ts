@@ -43,7 +43,7 @@ function describeMaterial(m: MaterialVM): string {
   ].join(" ");
 }
 
-function actionsFor(m: MaterialVM): AssistantAction[] {
+export function actionsFor(m: MaterialVM): AssistantAction[] {
   const acts: AssistantAction[] = [];
   const who = m.supplier?.name ?? "the supplier";
   if (m.onTimeProbability < 0.6) {
@@ -210,4 +210,82 @@ export function answerLocally(question: string, materials: MaterialVM[]): Assist
     actions: actionsFor(topRisk),
     confidence: 0.7,
   };
+}
+
+/**
+ * Builds a plain-language, grounded system prompt for the LLM. The model must
+ * answer ONLY from this data, in simple words.
+ */
+export function buildSystemPrompt(materials: MaterialVM[]): string {
+  const today = new Date().toISOString().slice(0, 10);
+  const lines = materials
+    .map((m) => {
+      const tone = simpleOf(m);
+      const state =
+        tone === "late" ? "RUNNING LATE" : tone === "risky" ? "might be late" : "on time";
+      const need = m.needBy ? formatDate(m.needBy) : "no date set";
+      const arrive = m.expectedArrival ? formatDate(m.expectedArrival) : "no date set";
+      const sup = m.supplier
+        ? `${m.supplier.name} (${supplierText(m.supplier.onTimeRate).toLowerCase()})`
+        : "no supplier set";
+      const paper =
+        m.paperwork === "revise_resubmit"
+          ? "papers NOT approved (work is stuck)"
+          : m.paperwork === "pending"
+          ? "papers waiting for approval"
+          : "papers approved";
+      return `- ${m.name}${m.projectName ? ` [project: ${m.projectName}]` : ""}: ${madeStatusText(
+        m.status
+      ).toLowerCase()}; needed by ${need}; should arrive ${arrive} (${latenessText(
+        m
+      )}); ${state}; made by ${sup}; ${paper}; every day late costs about ${currency(
+        m.costOfDelayPerDay
+      )}${m.notes ? `; note: ${m.notes}` : ""}.`;
+    })
+    .join("\n");
+
+  return `You are ConstrAI, a friendly helper for a construction site manager who may have had little schooling. Today is ${today}.
+Rules:
+- Use very short, simple sentences and everyday words. No technical terms, no percentages, no jargon.
+- Answer ONLY using the material list below. If the answer is not there, say you don't have that information.
+- Never invent materials, suppliers, dates, or numbers.
+- If something is late or has a problem, tell them ONE clear thing to do (like "call the supplier" or "do other work first").
+- Keep answers to 1-3 short sentences.
+
+THE MATERIALS (${materials.length}):
+${lines || "No materials have been added yet."}`;
+}
+
+/** Materials whose name is clearly referenced in a piece of text. */
+export function findMentioned(text: string, materials: MaterialVM[]): MaterialVM[] {
+  const t = text.toLowerCase();
+  // Generic construction words that would over-match if used alone.
+  const stop = new Set([
+    "units",
+    "level",
+    "slab",
+    "panel",
+    "panels",
+    "order",
+    "orders",
+    "material",
+    "materials",
+    "system",
+    "systems",
+    "elevation",
+    "east",
+    "west",
+    "north",
+    "south",
+    "face",
+  ]);
+  return materials.filter((m) => {
+    const shortName = m.name.split("—")[0].trim().toLowerCase();
+    if (shortName.length > 3 && t.includes(shortName)) return true;
+    // fall back to distinctive words in the name (skip generic ones)
+    return m.name
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .some((w) => w.length > 4 && !stop.has(w) && t.includes(w));
+  });
 }
