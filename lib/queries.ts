@@ -53,7 +53,23 @@ export async function getSuppliers(): Promise<SupplierVM[]> {
   return (data ?? []).map(supRowToVM);
 }
 
-export async function getProjects() {
+export async function getSupplier(id: string): Promise<SupplierVM | null> {
+  if (!supabaseConfigured) {
+    return (await getSuppliers()).find((s) => s.id === id) ?? null;
+  }
+  const supabase = await createClient();
+  const { data } = await supabase.from("suppliers").select("*").eq("id", id).maybeSingle();
+  return data ? supRowToVM(data) : null;
+}
+
+export type ProjectVM = {
+  id: string;
+  name: string;
+  location: string | null;
+  code: string | null;
+};
+
+export async function getProjects(): Promise<ProjectVM[]> {
   if (!supabaseConfigured) {
     return [{ id: "demo", name: DEMO_ORG.projectName, location: DEMO_ORG.projectLocation, code: null }];
   }
@@ -63,6 +79,68 @@ export async function getProjects() {
     .select("id, name, location, code")
     .order("created_at", { ascending: true });
   return data ?? [];
+}
+
+export async function getProject(id: string): Promise<ProjectVM | null> {
+  if (!supabaseConfigured) {
+    return (await getProjects()).find((p) => p.id === id) ?? null;
+  }
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("projects")
+    .select("id, name, location, code")
+    .eq("id", id)
+    .maybeSingle();
+  return data ?? null;
+}
+
+export type TeamMember = {
+  userId: string;
+  role: string;
+  fullName: string | null;
+  email: string | null;
+  isMe: boolean;
+};
+export type TeamInvite = { id: string; email: string };
+export type TeamData = { members: TeamMember[]; invites: TeamInvite[]; myRole: string };
+
+export async function getTeam(): Promise<TeamData> {
+  if (!supabaseConfigured) {
+    return {
+      members: [
+        { userId: "demo", role: "owner", fullName: "Site Manager", email: "you@example.com", isMe: true },
+      ],
+      invites: [],
+      myRole: "owner",
+    };
+  }
+  const supabase = await createClient();
+  const [{ data: members }, { data: userRes }] = await Promise.all([
+    supabase.from("org_members").select("user_id, role").order("created_at", { ascending: true }),
+    supabase.auth.getUser(),
+  ]);
+  const me = userRes?.user?.id;
+  const ids = (members ?? []).map((m) => m.user_id);
+  const { data: profiles } = ids.length
+    ? await supabase.from("profiles").select("id, full_name, email").in("id", ids)
+    : { data: [] };
+  const pMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+  const { data: invites } = await supabase
+    .from("org_invites")
+    .select("id, email")
+    .order("created_at", { ascending: true });
+
+  return {
+    members: (members ?? []).map((m) => ({
+      userId: m.user_id,
+      role: m.role,
+      fullName: pMap.get(m.user_id)?.full_name ?? null,
+      email: pMap.get(m.user_id)?.email ?? null,
+      isMe: m.user_id === me,
+    })),
+    invites: invites ?? [],
+    myRole: (members ?? []).find((m) => m.user_id === me)?.role ?? "member",
+  };
 }
 
 export async function getOrgInfo(): Promise<OrgInfo> {

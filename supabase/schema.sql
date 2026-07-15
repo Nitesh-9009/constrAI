@@ -72,9 +72,19 @@ create table if not exists public.materials (
 -- If the table already existed, make sure newer columns are present.
 alter table public.materials add column if not exists paperwork text not null default 'approved';
 
+create table if not exists public.org_invites (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references public.orgs(id) on delete cascade,
+  email text not null,
+  invited_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  unique (org_id, email)
+);
+
 create index if not exists materials_org_idx on public.materials(org_id);
 create index if not exists suppliers_org_idx on public.suppliers(org_id);
 create index if not exists projects_org_idx on public.projects(org_id);
+create index if not exists org_invites_email_idx on public.org_invites(lower(email));
 
 -- ─────────────────────────────────────────────────────────────
 -- Membership helper (security definer → avoids RLS recursion)
@@ -101,11 +111,20 @@ alter table public.profiles enable row level security;
 alter table public.projects enable row level security;
 alter table public.suppliers enable row level security;
 alter table public.materials enable row level security;
+alter table public.org_invites enable row level security;
 
--- profiles: you can see/edit only your own
+-- profiles: you can see/edit your own; you can also read teammates in your org
 drop policy if exists profiles_self on public.profiles;
 create policy profiles_self on public.profiles
   for all using (id = auth.uid()) with check (id = auth.uid());
+drop policy if exists profiles_same_org on public.profiles;
+create policy profiles_same_org on public.profiles for select using (
+  exists (
+    select 1 from public.org_members m1
+    join public.org_members m2 on m1.org_id = m2.org_id
+    where m1.user_id = auth.uid() and m2.user_id = public.profiles.id
+  )
+);
 
 -- orgs: members can read; the creator can insert; owners can update/delete
 drop policy if exists orgs_select on public.orgs;
@@ -122,6 +141,11 @@ drop policy if exists members_insert on public.org_members;
 create policy members_insert on public.org_members for insert with check (public.is_org_member(org_id) or user_id = auth.uid());
 drop policy if exists members_delete on public.org_members;
 create policy members_delete on public.org_members for delete using (public.is_org_member(org_id));
+
+-- org_invites: members can read & manage invites for their org
+drop policy if exists invites_all on public.org_invites;
+create policy invites_all on public.org_invites for all
+  using (public.is_org_member(org_id)) with check (public.is_org_member(org_id));
 
 -- org-scoped data tables: full access for members of the org
 do $$
@@ -147,6 +171,7 @@ set search_path = public
 as $$
 declare
   new_org uuid;
+  invite_org uuid;
   proj uuid;
   s_atlas uuid;
   s_terra uuid;
@@ -155,6 +180,18 @@ declare
 begin
   insert into public.profiles (id, full_name, email)
   values (new.id, coalesce(new.raw_user_meta_data->>'full_name', ''), new.email);
+
+  -- If this email was invited to a company, join that company (no new org, no seed).
+  select org_id into invite_org from public.org_invites
+  where lower(email) = lower(new.email) limit 1;
+
+  if invite_org is not null then
+    insert into public.org_members (org_id, user_id, role)
+    values (invite_org, new.id, 'member')
+    on conflict do nothing;
+    delete from public.org_invites where lower(email) = lower(new.email);
+    return new;
+  end if;
 
   insert into public.orgs (name, created_by)
   values (coalesce(nullif(new.raw_user_meta_data->>'company', ''), 'My Company'), new.id)

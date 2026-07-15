@@ -10,42 +10,47 @@ import type { OrgInfo } from "@/lib/materials";
 
 export function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+
+  const renderItem = (item: (typeof navItems)[number]) => {
+    const active =
+      item.href === "/dashboard"
+        ? pathname === "/dashboard"
+        : pathname.startsWith(item.href);
+    const Icon = item.icon;
+    return (
+      <Link
+        key={item.label}
+        href={item.href}
+        onClick={onNavigate}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+          active
+            ? "bg-primary-50 text-primary-700 shadow-inset-soft"
+            : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+        )}
+      >
+        {active && (
+          <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-primary-600" />
+        )}
+        <Icon
+          className={cn(
+            "h-5 w-5 transition-colors",
+            active ? "text-primary-600" : "text-slate-400 group-hover:text-slate-600"
+          )}
+          strokeWidth={1.8}
+        />
+        {item.label}
+      </Link>
+    );
+  };
+
   return (
     <nav className="flex-1 space-y-1 px-3" aria-label="Primary">
       <p className="px-3 pb-1.5 pt-2 label-muted">Menu</p>
-      {navItems.map((item) => {
-        const active =
-          item.href === "/dashboard"
-            ? pathname === "/dashboard"
-            : pathname.startsWith(item.href);
-        const Icon = item.icon;
-        return (
-          <Link
-            key={item.label}
-            href={item.href}
-            onClick={onNavigate}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
-              active
-                ? "bg-primary-50 text-primary-700 shadow-inset-soft"
-                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-            )}
-          >
-            {active && (
-              <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-primary-600" />
-            )}
-            <Icon
-              className={cn(
-                "h-5 w-5 transition-colors",
-                active ? "text-primary-600" : "text-slate-400 group-hover:text-slate-600"
-              )}
-              strokeWidth={1.8}
-            />
-            {item.label}
-          </Link>
-        );
-      })}
+      {navItems.filter((i) => i.group !== "manage").map(renderItem)}
+      <p className="px-3 pb-1.5 pt-4 label-muted">Manage</p>
+      {navItems.filter((i) => i.group === "manage").map(renderItem)}
     </nav>
   );
 }

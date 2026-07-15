@@ -26,6 +26,30 @@ export type Database = {
         Update: { org_id?: string; user_id?: string; role?: string; created_at?: string };
         Relationships: [];
       };
+      org_invites: {
+        Row: {
+          id: string;
+          org_id: string;
+          email: string;
+          invited_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          email: string;
+          invited_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          email?: string;
+          invited_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: { id: string; full_name: string | null; email: string | null; created_at: string };
         Insert: { id: string; full_name?: string | null; email?: string | null; created_at?: string };
