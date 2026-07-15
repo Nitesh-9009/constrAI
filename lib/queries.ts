@@ -15,11 +15,19 @@ import type { MaterialRow, SupplierRow } from "./database.types";
 
 export const ACTIVE_PROJECT_COOKIE = "constrai_project";
 
-/** The project the user is currently viewing (null = all projects). */
+/**
+ * The project the user is currently viewing (null = all projects).
+ * Validated against the user's own projects so a stale cookie from a previous
+ * user/session can never hide the current user's data.
+ */
 export async function getActiveProjectId(): Promise<string | null> {
   const store = await cookies();
   const v = store.get(ACTIVE_PROJECT_COOKIE)?.value;
-  return v && v !== "all" ? v : null;
+  if (!v || v === "all") return null;
+  if (!supabaseConfigured) return v;
+  const supabase = await createClient();
+  const { data } = await supabase.from("projects").select("id").eq("id", v).maybeSingle();
+  return data ? v : null;
 }
 
 /** All materials for the signed-in user's org, filtered to the active project. */
@@ -166,6 +174,26 @@ export async function getTeam(): Promise<TeamData> {
     })),
     invites: invites ?? [],
     myRole: (members ?? []).find((m) => m.user_id === me)?.role ?? "member",
+  };
+}
+
+export type Me = { name: string; email: string };
+
+export async function getMe(): Promise<Me> {
+  if (!supabaseConfigured) return { name: "Site Manager", email: "" };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { name: "Site Manager", email: "" };
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", user.id)
+    .maybeSingle();
+  return {
+    name: profile?.full_name || user.email?.split("@")[0] || "Site Manager",
+    email: profile?.email || user.email || "",
   };
 }
 

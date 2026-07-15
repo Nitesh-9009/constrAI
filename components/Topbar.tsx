@@ -22,7 +22,7 @@ import {
 import { cn, formatDate } from "@/lib/utils";
 import { simpleOf, latenessText } from "@/lib/plain";
 import type { MaterialVM, OrgInfo } from "@/lib/materials";
-import type { ProjectVM } from "@/lib/queries";
+import type { ProjectVM, Me } from "@/lib/queries";
 import { setActiveProject } from "@/lib/actions/project-context";
 import { supabaseConfigured } from "@/lib/supabase/config";
 import { Logo, SimpleBadge } from "./ui";
@@ -33,11 +33,13 @@ export function Topbar({
   org,
   projects,
   activeProjectId,
+  me,
 }: {
   items: MaterialVM[];
   org: OrgInfo;
   projects: ProjectVM[];
   activeProjectId: string | null;
+  me: Me;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -78,7 +80,7 @@ export function Topbar({
             <Sparkles className="h-3.5 w-3.5" /> Ask AI
           </Link>
           <Notifications items={items} />
-          <AccountMenu />
+          <AccountMenu me={me} org={org} />
         </div>
       </header>
 
@@ -443,9 +445,10 @@ function WorkspaceSelector({
   );
 }
 
-function AccountMenu() {
+function AccountMenu({ me, org }: { me: Me; org: OrgInfo }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const initial = (me.name || "?").charAt(0).toUpperCase();
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -464,7 +467,7 @@ function AccountMenu() {
         className="flex items-center gap-2 rounded-xl border border-hairline bg-white py-1 pl-1 pr-2 shadow-soft transition hover:bg-slate-50"
       >
         <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-primary-500 to-primary-800 text-xs font-bold text-white">
-          N
+          {initial}
         </span>
         <ChevronDown className="hidden h-3.5 w-3.5 text-slate-400 sm:block" />
       </button>
@@ -473,11 +476,11 @@ function AccountMenu() {
         <div className="absolute right-0 top-full z-40 mt-2 w-60 overflow-hidden rounded-2xl border border-hairline bg-white shadow-card-hover">
           <div className="flex items-center gap-3 border-b border-hairline px-4 py-3">
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-800 text-sm font-bold text-white">
-              N
+              {initial}
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-900">Site Manager</p>
-              <p className="truncate text-xs text-slate-400">Vertex Construction</p>
+              <p className="truncate text-sm font-semibold text-slate-900">{me.name}</p>
+              <p className="truncate text-xs text-slate-400">{me.email || org.companyName}</p>
             </div>
           </div>
           <Link
