@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Loader2, Save } from "lucide-react";
 import type { MaterialVM, SupplierVM } from "@/lib/materials";
+import { isRedirectError } from "@/lib/utils";
 
 const STATUS_OPTIONS = [
   { value: "ordered", label: "Order placed" },
@@ -38,6 +39,7 @@ export function MaterialForm({
     try {
       await action(fd);
     } catch (e) {
+      if (isRedirectError(e)) throw e;
       setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
     }
   }

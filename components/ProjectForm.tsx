@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Loader2, Save } from "lucide-react";
 import type { ProjectVM } from "@/lib/queries";
+import { isRedirectError } from "@/lib/utils";
 
 export function ProjectForm({
   action,
@@ -22,6 +23,7 @@ export function ProjectForm({
     try {
       await action(fd);
     } catch (e) {
+      if (isRedirectError(e)) throw e;
       setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
     }
   }

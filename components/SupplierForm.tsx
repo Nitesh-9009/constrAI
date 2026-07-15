@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Loader2, Save } from "lucide-react";
 import type { SupplierVM } from "@/lib/materials";
+import { isRedirectError } from "@/lib/utils";
 
 const RELIABILITY = [
   { value: "0.9", label: "Usually on time" },
@@ -35,6 +36,7 @@ export function SupplierForm({
     try {
       await action(fd);
     } catch (e) {
+      if (isRedirectError(e)) throw e;
       setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
     }
   }

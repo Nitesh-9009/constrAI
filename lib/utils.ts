@@ -29,3 +29,18 @@ export function currency(n: number) {
 export function pct(n: number) {
   return `${Math.round(n * 100)}%`;
 }
+
+/**
+ * True when an error thrown from a Server Action is actually Next.js's internal
+ * redirect() / notFound() signal, which must be re-thrown (never swallowed).
+ */
+export function isRedirectError(e: unknown): boolean {
+  return (
+    !!e &&
+    typeof e === "object" &&
+    "digest" in e &&
+    typeof (e as { digest?: unknown }).digest === "string" &&
+    ((e as { digest: string }).digest.startsWith("NEXT_REDIRECT") ||
+      (e as { digest: string }).digest === "NEXT_NOT_FOUND")
+  );
+}
